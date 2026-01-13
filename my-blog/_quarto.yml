@@ -2,20 +2,18 @@ project:
   type: website
 
 website:
-  title: "my-blog"
+  title: "My Blog"
   navbar:
     left:
       - href: index.qmd
         text: Home
-      - about.qmd
+      - href: posts.qmd
+        text: Posts
 
 format:
   html:
-    theme:
-      - cosmo
-      - brand
+    theme: cosmo
     css: styles.css
-    toc: true
 
 
 
