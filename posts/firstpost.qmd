@@ -21,7 +21,7 @@ I was looking at our setup - squat rack in particular - and it struck me how thi
 
 This should be possible, especially for our setup. It is particularly advantageous as we have a bright red barbell and bright rubber weight plates of different colours corresponding to their weights, which should make it possible to differentiate them via camera. 
 
-![Our Squat Rack Setup](imgs/gym-rack.png){width=50%}
+![Our Squat Rack Setup](https://res.cloudinary.com/dz0couwwr/image/upload/v1768355963/gym-rack_v7xkxf.png){width=50%}
 
 The exercise type could be classified based off a pre-existing landmark, which detects specific landmarks of the body, and then passed through a fairly lightweight machine learning model, such as a small CNN. Starting with just a squat, deadlift or bench press, it should be simple enough to classify between these exercises, and we can extend further once we have completed that.
 Finally, the number of repitions could be calculated by tracking the height of the barbell, passing through a smoothing  filter to remove noise in detection / camera and then counting significant peaks. 
