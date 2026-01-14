@@ -23,11 +23,47 @@ body {
 
 a {
   color: var(--brand-primary);
+  text-decoration-color: transparent;
+  text-decoration-thickness: 2px;
+  text-underline-offset: 0.2em;
+  transition: color 0.2s ease, text-decoration-color 0.2s ease,
+    text-decoration-thickness 0.2s ease;
 }
 
 a:hover,
 a:focus {
   color: var(--brand-accent);
+  text-decoration-color: currentColor;
+  text-decoration-thickness: 3px;
+}
+
+nav a,
+.nav-link,
+.navbar a {
+  transition: color 0.2s ease, text-decoration-color 0.2s ease,
+    text-decoration-thickness 0.2s ease;
+}
+
+nav a:hover,
+nav a:focus,
+.nav-link:hover,
+.nav-link:focus,
+.navbar a:hover,
+.navbar a:focus {
+  color: var(--brand-accent);
+  text-decoration-color: currentColor;
+  text-decoration-thickness: 3px;
+}
+
+button {
+  transition: color 0.2s ease, background-color 0.2s ease,
+    border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+button:hover,
+button:focus {
+  color: var(--brand-primary);
+  border-color: var(--brand-primary);
 }
 
 h1,
