@@ -3,7 +3,7 @@ project:
 
 website:
   title: "My Blog"
-  site-url: https://www.jonathankierce.com
+  site-url: https://jonathankierce.com
   navbar:
     left:
       - href: index.qmd
