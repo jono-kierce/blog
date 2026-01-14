@@ -4,14 +4,21 @@
     "href": "posts.html",
     "title": "Posts",
     "section": "",
-    "text": "First Post\n\n\n\n\n\n\n\n\nJan 13, 2026\n\n\n\n\n\nNo matching items"
+    "text": "An Idea, or two\n\n\n\n\n\n\n\n\nJan 13, 2026\n\n\n\n\n\nNo matching items"
   },
   {
     "objectID": "index.html",
     "href": "index.html",
-    "title": "my-blog",
+    "title": "My Blog",
     "section": "",
-    "text": "This is a Quarto website.\nTo learn more about Quarto websites visit https://quarto.org/docs/websites."
+    "text": "Welcome to my blog. I will pop random side quests I’m completing here."
+  },
+  {
+    "objectID": "posts/firstpost.html",
+    "href": "posts/firstpost.html",
+    "title": "An Idea, or two",
+    "section": "",
+    "text": "A quick welcome to my blog. I had this idea a while ago, to create a blog to show personal projects and the like now that I’ve graduated university. To be honest, I’m not sure of my target audience, if there is one, but I’m hopeful that having this will motivate me to a) complete personal projects and b) complete them more stringently.\nNow that was one idea. The idea I want to talk about here is a project idea. Those that know me know that these last few months I’ve been building a small basement gym (I’ve been quite gym-obsessed these last ~2 years).\nI was looking at our setup - squat rack in particular - and it struck me how this could be a fantastic computer vision problem. So, my idea is to build a camera-based system that can sit in the basement, pointed at the squat rack, and track:\n\nExercise type\nI.e squat, bench press, shoulder press etc.\nNumber of repitions\nThe number of times each exercise has been performed\nWeight\nThe weight on the barbell\n\nThis should be possible, especially for our setup. It is particularly advantageous as we have a bright red barbell and bright rubber weight plates of different colours corresponding to their weights, which should make it possible to differentiate them via camera.\n\n\n\nOur Squat Rack Setup\n\n\nThe exercise type could be classified based off a pre-existing landmark, which detects specific landmarks of the body, and then passed through a fairly lightweight machine learning model, such as a small CNN. Starting with just a squat, deadlift or bench press, it should be simple enough to classify between these exercises, and we can extend further once we have completed that. Finally, the number of repitions could be calculated by tracking the height of the barbell, passing through a smoothing filter to remove noise in detection / camera and then counting significant peaks.\nI am thinking about running this on a Raspberry Pi 5. I’m not sure exactly what I’ll do with this data once collected- it could be sent to a Google Sheets, to track everything. Something else that would be cool would be having a screen there showing the data from the completed set, so when you’ve repped out a set of max squats and have blurry vision you’re not left wondering if you made 7 or 8 on that last set."
   },
   {
     "objectID": "about.html",
