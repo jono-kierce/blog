@@ -1,1 +1,41 @@
 /* css styles */
+:root {
+  --brand-primary: #1d4ed8;
+  --brand-accent: #f97316;
+  --text: #0f172a;
+  --surface: #f8fafc;
+  --surface-border: #e2e8f0;
+}
+
+body {
+  color: var(--text);
+  background-color: var(--surface);
+}
+
+a {
+  color: var(--brand-primary);
+}
+
+a:hover,
+a:focus {
+  color: var(--brand-accent);
+}
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  color: var(--brand-primary);
+}
+
+.callout,
+.callout-box,
+.callout-note {
+  border-left: 4px solid var(--brand-accent);
+  background-color: var(--surface);
+  color: var(--text);
+  padding: 1rem 1.25rem;
+  box-shadow: 0 0 0 1px var(--surface-border);
+}
