@@ -3,4 +3,5 @@ title: Posts
 listing:
   contents: posts
   sort: "date desc"
+  categories: true
 ---
