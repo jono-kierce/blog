@@ -4,7 +4,7 @@
     "href": "posts.html",
     "title": "Posts",
     "section": "",
-    "text": "Initial Hardware Setup\n\n\n\ngym-project\n\n\n\n\n\n\n\n\n\nJan 15, 2026\n\n\nJonathan Kierce\n\n\n\n\n\n\n\n\n\n\n\n\nAn Idea, or two\n\n\n\ngym-project\n\n\n\n\n\n\n\n\n\nJan 13, 2026\n\n\nJonathan Kierce\n\n\n\n\n\n\n\n\n\n\n\n\nTest Post\n\n\n\n\n\n\n\n\nJan 13, 2026\n\n\nJonathan Kierce\n\n\n\n\n\n\n\n\n\n\n\n\nIntroduction to Remote Photoplethysmography (rPPG)\n\n\n\nrPPG\n\n\n\n\n\n\n\n\n\nDec 12, 2025\n\n\nJonathan Kierce\n\n\n\n\n\nNo matching items"
+    "text": "Initial Hardware Setup\n\n\n\ngym-project\n\n\n\n\n\n\n\n\n\nJan 15, 2026\n\n\nJonathan Kierce\n\n\n\n\n\n\n\n\n\n\n\n\nAn Idea, or two\n\n\n\ngym-project\n\n\n\n\n\n\n\n\n\nJan 13, 2026\n\n\nJonathan Kierce\n\n\n\n\n\n\n\n\n\n\n\n\nIntroduction to Remote Photoplethysmography (rPPG)\n\n\n\nrPPG\n\n\n\n\n\n\n\n\n\nDec 12, 2025\n\n\nJonathan Kierce\n\n\n\n\n\nNo matching items"
   },
   {
     "objectID": "index.html",
@@ -12,20 +12,6 @@
     "title": "My Blog",
     "section": "",
     "text": "Welcome to my blog. I will pop random side quests I’m completing here."
-  },
-  {
-    "objectID": "posts/testpost.html",
-    "href": "posts/testpost.html",
-    "title": "Test Post",
-    "section": "",
-    "text": "This is a test post."
-  },
-  {
-    "objectID": "posts/01-firstpost.html",
-    "href": "posts/01-firstpost.html",
-    "title": "An Idea, or two",
-    "section": "",
-    "text": "A quick welcome to my blog. I had this idea a while ago, to create a blog to show personal projects and the like now that I’ve graduated university. To be honest, I’m not sure of my target audience, if there is one, but I’m hopeful that having this will motivate me to a) complete personal projects and b) complete them more stringently.\nNow that was one idea. The idea I want to talk about here is a project idea. Those that know me know that these last few months I’ve been building a small basement gym (I’ve been quite gym-obsessed these last ~2 years).\nI was looking at our setup - squat rack in particular - and it struck me how this could be a fantastic computer vision problem. So, my idea is to build a camera-based system that can sit in the basement, pointed at the squat rack, and track:\n\nExercise type\nI.e squat, bench press, shoulder press etc.\nNumber of repitions\nThe number of times each exercise has been performed\nWeight\nThe weight on the barbell\n\nThis should be possible, especially for our setup. It is particularly advantageous as we have a bright red barbell and bright rubber weight plates of different colours corresponding to their weights, which should make it possible to differentiate them via camera.\n\n\n\nOur Squat Rack Setup\n\n\nThe exercise type could be classified based off a pre-existing landmark, which detects specific landmarks of the body, and then passed through a fairly lightweight machine learning model, such as a small CNN. Starting with just a squat, deadlift or bench press, it should be simple enough to classify between these exercises, and we can extend further once we have completed that. Finally, the number of repitions could be calculated by tracking the height of the barbell, passing through a smoothing filter to remove noise in detection / camera and then counting significant peaks.\nI am thinking about running this on a Raspberry Pi 5. I’m not sure exactly what I’ll do with this data once collected- it could be sent to a Google Sheets, to track everything. Something else that would be cool would be having a screen there showing the data from the completed set, so when you’ve repped out a set of max squats and have blurry vision you’re not left wondering if you made 7 or 8 on that last set."
   },
   {
     "objectID": "posts/02-rppgintro.html",
@@ -40,6 +26,13 @@
     "title": "Introduction to Remote Photoplethysmography (rPPG)",
     "section": "References",
     "text": "References\n\n\nDzedzickis, Andrius, Arturas Kaklauskas, and Vytautas Bučinskas. 2020. “Human Emotion Recognition: Review of Sensors and Methods.” Sensors 20 (January): 592. https://doi.org/10.3390/s20030592.\n\n\nKim, Dae-Yeol, Kwangkee Lee, and Chae-Bong Sohn. 2021. “Assessment of ROI Selection for Facial Video-Based rPPG.” Sensors 21 (23). https://doi.org/10.3390/s21237923.\n\n\nKing, Davis E. 2015. “Shape_predictor_68_face_landmarks.dat.bz2.” Dlib model file download. http://dlib.net/files/shape_predictor_68_face_landmarks.dat.bz2.\n\n\nVerkruysse, Wim, Lars O. Svaasand, and J. Stuart Nelson. 2008. “Remote Plethysmographic Imaging Using Ambient Light.” Optics Express 16 (26): 21434–45. https://doi.org/10.1364/OE.16.021434.\n\n\nYang, Yuting, Chenbin Liu, Hui Yu, Dangdang Shao, Francis Tsow, and Nongjian Tao. 2016. “Motion Robust Remote Photoplethysmography in CIELab Color Space.” Journal of Biomedical Optics 21 (11): 117001. https://doi.org/10.1117/1.JBO.21.11.117001."
+  },
+  {
+    "objectID": "posts/01-firstpost.html",
+    "href": "posts/01-firstpost.html",
+    "title": "An Idea, or two",
+    "section": "",
+    "text": "A quick welcome to my blog. I had this idea a while ago, to create a blog to show personal projects and the like now that I’ve graduated university. To be honest, I’m not sure of my target audience, if there is one, but I’m hopeful that having this will motivate me to a) complete personal projects and b) complete them more stringently.\nNow that was one idea. The idea I want to talk about here is a project idea. Those that know me know that these last few months I’ve been building a small basement gym (I’ve been quite gym-obsessed these last ~2 years).\nI was looking at our setup - squat rack in particular - and it struck me how this could be a fantastic computer vision problem. So, my idea is to build a camera-based system that can sit in the basement, pointed at the squat rack, and track:\n\nExercise type\nI.e squat, bench press, shoulder press etc.\nNumber of repitions\nThe number of times each exercise has been performed\nWeight\nThe weight on the barbell\n\nThis should be possible, especially for our setup. It is particularly advantageous as we have a bright red barbell and bright rubber weight plates of different colours corresponding to their weights, which should make it possible to differentiate them via camera.\n\n\n\nOur Squat Rack Setup\n\n\nThe exercise type could be classified based off a pre-existing landmark, which detects specific landmarks of the body, and then passed through a fairly lightweight machine learning model, such as a small CNN. Starting with just a squat, deadlift or bench press, it should be simple enough to classify between these exercises, and we can extend further once we have completed that. Finally, the number of repitions could be calculated by tracking the height of the barbell, passing through a smoothing filter to remove noise in detection / camera and then counting significant peaks.\nI am thinking about running this on a Raspberry Pi 5. I’m not sure exactly what I’ll do with this data once collected- it could be sent to a Google Sheets, to track everything. Something else that would be cool would be having a screen there showing the data from the completed set, so when you’ve repped out a set of max squats and have blurry vision you’re not left wondering if you made 7 or 8 on that last set."
   },
   {
     "objectID": "posts/03-rasppi-setup.html",
