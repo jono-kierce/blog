@@ -80,9 +80,9 @@ ul.task-list li input[type="checkbox"] {
     }
 
     const options = {
-      valueNames: ['listing-date','listing-title','listing-author','listing-image','listing-description',{ data: ['index'] },{ data: ['categories'] },{ data: ['listing-date-sort'] },{ data: ['listing-file-modified-sort'] }],
+      valueNames: ['listing-date','listing-title','listing-author','listing-image','listing-description','listing-categories',{ data: ['index'] },{ data: ['categories'] },{ data: ['listing-date-sort'] },{ data: ['listing-file-modified-sort'] }],
       
-      searchColumns: ["listing-date","listing-title","listing-author","listing-image","listing-description"],
+      searchColumns: ["listing-date","listing-title","listing-author","listing-image","listing-description","listing-categories"],
     };
 
     window['quarto-listings'] = window['quarto-listings'] || {};
@@ -133,7 +133,7 @@ window.Quarto = {
 <link rel="stylesheet" href="styles.css">
 </head>
 
-<body class="nav-fixed fullcontent quarto-light">
+<body class="nav-fixed quarto-light">
 
 <div id="quarto-search-results"></div>
   <header id="quarto-header" class="headroom fixed-top">
@@ -169,7 +169,9 @@ window.Quarto = {
 <div id="quarto-content" class="quarto-container page-columns page-rows-contents page-layout-article page-navbar">
 <!-- sidebar -->
 <!-- margin-sidebar -->
-    
+    <div id="quarto-margin-sidebar" class="sidebar margin-sidebar">
+        
+    <h5 class="quarto-listing-category-title">Categories</h5><div class="quarto-listing-category category-default"><div class="category" data-category="">All <span class="quarto-category-count">(4)</span></div><div class="category" data-category="Z3ltLXByb2plY3Q=">gym-project <span class="quarto-category-count">(2)</span></div><div class="category" data-category="clBQRw==">rPPG <span class="quarto-category-count">(1)</span></div></div></div>
 <!-- main -->
 <main class="content" id="quarto-document-content">
 
@@ -198,29 +200,67 @@ window.Quarto = {
 
 <div class="quarto-listing quarto-listing-container-default" id="listing-listing">
 <div class="list quarto-listing-default">
-<div class="quarto-post image-right" data-index="0" data-listing-date-sort="1768222800000" data-listing-file-modified-sort="1768355982763" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="3" data-listing-word-count-sort="406">
-<div class="thumbnail"><a href="./posts/firstpost.html" class="no-external">
+<div class="quarto-post image-right" data-index="0" data-categories="Z3ltLXByb2plY3Q=" data-listing-date-sort="1768395600000" data-listing-file-modified-sort="1768457769567" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="1" data-listing-word-count-sort="35">
+<div class="thumbnail"><a href="./posts/03-rasppi-setup.html" class="no-external">
 
 <div class="listing-item-img-placeholder card-img-top" >&nbsp;</div>
 
 </a></div>
 <div class="body">
 <h3 class="no-anchor listing-title">
-<a href="./posts/firstpost.html" class="no-external">An Idea, or two</a>
+<a href="./posts/03-rasppi-setup.html" class="no-external">Initial Hardware Setup</a>
 </h3>
-<div class="delink listing-description"><a href="./posts/firstpost.html" class="no-external">
-A quick welcome to my blog. I had this idea a while ago, to create a blog to show personal projects and the like now that I’ve graduated university. To be honest, I’m not…
+<div class="listing-categories">
+
+<div class="listing-category" onclick="window.quartoListingCategory('Z3ltLXByb2plY3Q='); return false;">gym-project</div>
+
+</div>
+<div class="delink listing-description"><a href="./posts/03-rasppi-setup.html" class="no-external">
+Today I received the parcel with my hardware, meaning it’s time to stop talking about this project and start doing!
 </a></div>
 </div>
 <div class="metadata">
-<a href="./posts/firstpost.html" class="no-external">
+<a href="./posts/03-rasppi-setup.html" class="no-external">
 <div class="listing-date">
-Jan 13, 2026
+Jan 15, 2026
+</div>
+<div class="listing-author">
+Jonathan Kierce
 </div>
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="1" data-listing-date-sort="1768222800000" data-listing-file-modified-sort="1768356456270" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="1" data-listing-word-count-sort="5">
+<div class="quarto-post image-right" data-index="1" data-categories="Z3ltLXByb2plY3Q=" data-listing-date-sort="1768222800000" data-listing-file-modified-sort="1768385106207" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="3" data-listing-word-count-sort="406">
+<div class="thumbnail"><a href="./posts/01-firstpost.html" class="no-external">
+
+<div class="listing-item-img-placeholder card-img-top" >&nbsp;</div>
+
+</a></div>
+<div class="body">
+<h3 class="no-anchor listing-title">
+<a href="./posts/01-firstpost.html" class="no-external">An Idea, or two</a>
+</h3>
+<div class="listing-categories">
+
+<div class="listing-category" onclick="window.quartoListingCategory('Z3ltLXByb2plY3Q='); return false;">gym-project</div>
+
+</div>
+<div class="delink listing-description"><a href="./posts/01-firstpost.html" class="no-external">
+A quick welcome to my blog. I had this idea a while ago, to create a blog to show personal projects and the like now that I’ve graduated university. To be honest, I’m not…
+</a></div>
+</div>
+<div class="metadata">
+<a href="./posts/01-firstpost.html" class="no-external">
+<div class="listing-date">
+Jan 13, 2026
+</div>
+<div class="listing-author">
+Jonathan Kierce
+</div>
+</a>
+</div>
+</div>
+<div class="quarto-post image-right" data-index="2" data-listing-date-sort="1768222800000" data-listing-file-modified-sort="1768356456270" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="1" data-listing-word-count-sort="5">
 <div class="thumbnail"><a href="./posts/testpost.html" class="no-external">
 
 <div class="listing-item-img-placeholder card-img-top" >&nbsp;</div>
@@ -238,6 +278,39 @@ This is a test post.
 <a href="./posts/testpost.html" class="no-external">
 <div class="listing-date">
 Jan 13, 2026
+</div>
+<div class="listing-author">
+Jonathan Kierce
+</div>
+</a>
+</div>
+</div>
+<div class="quarto-post image-right" data-index="3" data-categories="clBQRw==" data-listing-date-sort="1765458000000" data-listing-file-modified-sort="1768482977157" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="4" data-listing-word-count-sort="690">
+<div class="thumbnail"><a href="./posts/02-rppgintro.html" class="no-external">
+
+<div class="listing-item-img-placeholder card-img-top" >&nbsp;</div>
+
+</a></div>
+<div class="body">
+<h3 class="no-anchor listing-title">
+<a href="./posts/02-rppgintro.html" class="no-external">Introduction to Remote Photoplethysmography (rPPG)</a>
+</h3>
+<div class="listing-categories">
+
+<div class="listing-category" onclick="window.quartoListingCategory('clBQRw=='); return false;">rPPG</div>
+
+</div>
+<div class="delink listing-description"><a href="./posts/02-rppgintro.html" class="no-external">
+Over the past year, as part of my Bachelor of Engineering, I’ve been working on a remote photoplethysmography project, with specific contributions of creating an iOS…
+</a></div>
+</div>
+<div class="metadata">
+<a href="./posts/02-rppgintro.html" class="no-external">
+<div class="listing-date">
+Dec 12, 2025
+</div>
+<div class="listing-author">
+Jonathan Kierce
 </div>
 </a>
 </div>

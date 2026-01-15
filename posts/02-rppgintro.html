@@ -6,9 +6,10 @@
 
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 
-<meta name="dcterms.date" content="2026-01-13">
+<meta name="author" content="Jonathan Kierce">
+<meta name="dcterms.date" content="2025-12-12">
 
-<title>An Idea, or two – My Blog</title>
+<title>Introduction to Remote Photoplethysmography (rPPG) – My Blog</title>
 <style>
 code{white-space: pre-wrap;}
 span.smallcaps{font-variant: small-caps;}
@@ -21,7 +22,27 @@ ul.task-list li input[type="checkbox"] {
   margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
   vertical-align: middle;
 }
-</style>
+/* CSS for citations */
+div.csl-bib-body { }
+div.csl-entry {
+  clear: both;
+  margin-bottom: 0em;
+}
+.hanging-indent div.csl-entry {
+  margin-left:2em;
+  text-indent:-2em;
+}
+div.csl-left-margin {
+  min-width:2em;
+  float:left;
+}
+div.csl-right-inline {
+  margin-left:2em;
+  padding-left:1em;
+}
+div.csl-indent {
+  margin-left: 2em;
+}</style>
 
 
 <script src="../site_libs/quarto-nav/quarto-nav.js"></script>
@@ -116,9 +137,9 @@ ul.task-list li input[type="checkbox"] {
 
 <header id="title-block-header" class="quarto-title-block default">
 <div class="quarto-title">
-<h1 class="title">An Idea, or two</h1>
+<h1 class="title">Introduction to Remote Photoplethysmography (rPPG)</h1>
   <div class="quarto-categories">
-    <div class="quarto-category">gym-project</div>
+    <div class="quarto-category">rPPG</div>
   </div>
   </div>
 
@@ -126,11 +147,17 @@ ul.task-list li input[type="checkbox"] {
 
 <div class="quarto-title-meta">
 
+    <div>
+    <div class="quarto-title-meta-heading">Author</div>
+    <div class="quarto-title-meta-contents">
+             <p>Jonathan Kierce </p>
+          </div>
+  </div>
     
     <div>
     <div class="quarto-title-meta-heading">Published</div>
     <div class="quarto-title-meta-contents">
-      <p class="date">January 13, 2026</p>
+      <p class="date">December 12, 2025</p>
     </div>
   </div>
   
@@ -142,28 +169,79 @@ ul.task-list li input[type="checkbox"] {
 </header>
 
 
-<p>A quick welcome to my blog. I had this idea a while ago, to create a blog to show personal projects and the like now that I’ve graduated university. To be honest, I’m not sure of my target audience, if there is one, but I’m hopeful that having this will motivate me to a) complete personal projects and b) complete them more stringently.</p>
-<p>Now that was one idea. The idea I want to talk about here is a project idea. Those that know me know that these last few months I’ve been building a small basement gym (I’ve been quite gym-obsessed these last ~2 years).</p>
-<p>I was looking at our setup - squat rack in particular - and it struck me how this could be a fantastic computer vision problem. So, my idea is to build a camera-based system that can sit in the basement, pointed at the squat rack, and track:</p>
-<ul>
-<li><p>Exercise type</p>
-<p>I.e squat, bench press, shoulder press etc.</p></li>
-<li><p>Number of repitions</p>
-<p>The number of times each exercise has been performed</p></li>
-<li><p>Weight</p>
-<p>The weight on the barbell</p></li>
-</ul>
-<p>This should be possible, especially for our setup. It is particularly advantageous as we have a bright red barbell and bright rubber weight plates of different colours corresponding to their weights, which should make it possible to differentiate them via camera.</p>
+<p>Over the past year, as part of my Bachelor of Engineering, I’ve been working on a remote photoplethysmography project, with specific contributions of creating an iOS application, and of extending this work into Atrial Fibrillation (AF) detection. I thought it might be interesting to write about rPPG from a few perspectives. This post is a quick crash course collating the general state-of-the-field as discovered while researching this project.</p>
+<section id="what-is-rppg" class="level3">
+<h3 class="anchored" data-anchor-id="what-is-rppg">What is rPPG?</h3>
+<p>In order to understand rPPG, it would be good to first introduce photoplethysmography. Photoplethysmography is a technique used to detect changes in blood volume based off changes in skin luminance. This is a super common technique- you see it everyday in your Apple Watch/ Fitbit/ Garmin. A light (typically green) shines from the wrist-based watch. A light sensor monitors how much of that comes back. Based on that, you can read a user’s heart rate, and increasingly other information such as heart rate variability (HRV) or blood oxygen levels. The below figure, from <span class="citation" data-cites="ppg_img">Dzedzickis, Kaklauskas, and Bučinskas (<a href="#ref-ppg_img" role="doc-biblioref">2020</a>)</span>, is a pretty good illustration: <img src="https://www.researchgate.net/publication/338723696/figure/fig8/AS:11431281391063538@1745306386021/Principle-of-photoplethysmography-PPG-104-a-reflective-mode-b-transmitting.tif" class="img-fluid" style="width:50.0%" alt="PPG illustration (source: Dzedzickis, Kaklauskas, and Bučinskas (2020))"></p>
+<p>That’s photoplethysmography. <em>Remote</em> photoplethysmography (rPPG) applies the same idea without skin contact, using a video feed. As blood volume changes, the skin’s reflectance shifts subtly over time, and a camera can pick up those tiny variations. The challenge is that video introduces many more sources of noise than a wrist-worn sensor, which controls lighting, distance, and motion much more tightly.</p>
+</section>
+<section id="a-general-overview-of-rppg" class="level3">
+<h3 class="anchored" data-anchor-id="a-general-overview-of-rppg">A general overview of rPPG</h3>
+<p>There are many different techniques used in rPPG but they generally follow this pipeline:</p>
+<ol type="1">
+<li><p><strong>Capture video</strong> Video is taken, typically of a face.</p></li>
+<li><p><strong>Track region(s) of interest</strong> It is necessary to decide upon an area of the face from which the signal will be extracted. A face is tracked using a landmarking model, such as Davis E. King’s <a href="https://github.com/davisking/dlib-models">DLib 68-point landmark model</a> <span class="citation" data-cites="DLib_shape_predictor_68">(<a href="#ref-DLib_shape_predictor_68" role="doc-biblioref">King 2015</a>)</span>. As the name implies, the model identifies 68 key points on the face. You can then reference these to create consistent areas on the face to track.</p></li>
+</ol>
 <div class="quarto-figure quarto-figure-center">
 <figure class="figure">
-<p><img src="https://res.cloudinary.com/dz0couwwr/image/upload/v1768355963/gym-rack_v7xkxf.png" class="img-fluid figure-img" style="width:50.0%"></p>
-<figcaption>Our Squat Rack Setup</figcaption>
+<p><img src="https://res.cloudinary.com/dz0couwwr/image/upload/v1768389981/Screenshot_2026-01-14_at_10.23.17_pm_gboh36.png" class="img-fluid figure-img" style="width:50.0%"></p>
+<figcaption>Location of the 68 landmarks tracked by the DLib facial detector</figcaption>
 </figure>
 </div>
-<p>The exercise type could be classified based off a pre-existing landmark, which detects specific landmarks of the body, and then passed through a fairly lightweight machine learning model, such as a small CNN. Starting with just a squat, deadlift or bench press, it should be simple enough to classify between these exercises, and we can extend further once we have completed that. Finally, the number of repitions could be calculated by tracking the height of the barbell, passing through a smoothing filter to remove noise in detection / camera and then counting significant peaks.</p>
-<p>I am thinking about running this on a Raspberry Pi 5. I’m not sure exactly what I’ll do with this data once collected- it could be sent to a Google Sheets, to track everything. Something else that would be cool would be having a screen there showing the data from the completed set, so when you’ve repped out a set of max squats and have blurry vision you’re not left wondering if you made 7 or 8 on that last set.</p>
+<p>There has been different work on the best regions of interest (ROIs) to track. A well-structured analysis was done by <span class="citation" data-cites="roi_selection_assessment">Kim, Lee, and Sohn (<a href="#ref-roi_selection_assessment" role="doc-biblioref">2021</a>)</span> and their results agree with the generally held wisdom: the cheeks and forehead are the best places to extract a signal from.</p>
+<p>There is also other work that doesn’t use areas per say, instead opting for a ‘skin mask’ that detects the skin on the face and ignores non-pulsatile things such as hair. You can then use the whole identified skin area as your signal.</p>
+<p>I think this may be overkill; from experience I’ve found that the ROI selection is less important than what you do in step 5.</p>
+<ol start="3" type="1">
+<li><strong>Extract raw colour signals</strong></li>
+</ol>
+<p>For each frame, we now have a lot of information (RGB values) contained within the identified region(s). It is necessary to reduce this down. Typically, a mean of the RGB values is taken, but it is also possible to use a median. There is also other works that use other colour spaces - for example <span class="citation" data-cites="yang2016cielab_rppg">Yang et al. (<a href="#ref-yang2016cielab_rppg" role="doc-biblioref">2016</a>)</span> use the CIELab colourspace.</p>
+<div class="quarto-figure quarto-figure-center">
+<figure class="figure">
+<p><img src="https://res.cloudinary.com/dz0couwwr/image/upload/v1768482473/Screenshot_2026-01-16_at_12.06.33_am_svwxze.png" class="img-fluid figure-img"></p>
+<figcaption>An example of a great signal RGB values across ~900 frames (~30s)</figcaption>
+</figure>
+</div>
+<ol start="4" type="1">
+<li><strong>Pre-process</strong></li>
+</ol>
+<p>Now that we have a simple signal per frame, the next step is to stop thinking frame-by-frame. Heartbeat is inherently temporal, so almost every rPPG method works on short sliding windows. In this step, we can perform simple pre-processing- such as bandpass filtering or normalisation. The below is the result of applying a 4-th order Butterworth filter to the Green signal from the example in step 3. Note the signal is normalised prior to bandpass filtering.</p>
+<div class="quarto-figure quarto-figure-center">
+<figure class="figure">
+<p><img src="https://res.cloudinary.com/dz0couwwr/image/upload/v1768482475/Screenshot_2026-01-16_at_12.06.43_am_ajld8n.png" class="img-fluid figure-img"></p>
+<figcaption>The bandpass filtered green signal</figcaption>
+</figure>
+</div>
+<p>Note the large spike just after the 500th frame- this signal could benefit from a sliding-window normalisation in order to standardise the peaks.</p>
+<ol start="5" type="1">
+<li><strong>Convert colour changes to a pulse signal</strong></li>
+</ol>
+<p>This is the step where a lot of research has been conducted and can be considered the ‘trick’ with rPPG. The earliest rppg paper by <span class="citation" data-cites="verkruysse2008remote">Verkruysse, Svaasand, and Nelson (<a href="#ref-verkruysse2008remote" role="doc-biblioref">2008</a>)</span> simply took the green signal as the pulsatile component, <em>“consistent with the fact that (oxy-) hemoglobin absorbs green light better than red and penetrates sufficiently deeper into the skin as compared to blue light to probe the vasculature.”</em></p>
+<ol start="6" type="1">
+<li><strong>Post-process to calculate vital sign(s)</strong></li>
+</ol>
+</section>
+<section id="references" class="level2">
+<h2 class="anchored" data-anchor-id="references">References</h2>
+<div id="refs" class="references csl-bib-body hanging-indent" data-entry-spacing="0" role="list">
+<div id="ref-ppg_img" class="csl-entry" role="listitem">
+Dzedzickis, Andrius, Arturas Kaklauskas, and Vytautas Bučinskas. 2020. <span>“Human Emotion Recognition: Review of Sensors and Methods.”</span> <em>Sensors</em> 20 (January): 592. <a href="https://doi.org/10.3390/s20030592">https://doi.org/10.3390/s20030592</a>.
+</div>
+<div id="ref-roi_selection_assessment" class="csl-entry" role="listitem">
+Kim, Dae-Yeol, Kwangkee Lee, and Chae-Bong Sohn. 2021. <span>“Assessment of ROI Selection for Facial Video-Based rPPG.”</span> <em>Sensors</em> 21 (23). <a href="https://doi.org/10.3390/s21237923">https://doi.org/10.3390/s21237923</a>.
+</div>
+<div id="ref-DLib_shape_predictor_68" class="csl-entry" role="listitem">
+King, Davis E. 2015. <span>“Shape_predictor_68_face_landmarks.dat.bz2.”</span> Dlib model file download. <a href="http://dlib.net/files/shape_predictor_68_face_landmarks.dat.bz2">http://dlib.net/files/shape_predictor_68_face_landmarks.dat.bz2</a>.
+</div>
+<div id="ref-verkruysse2008remote" class="csl-entry" role="listitem">
+Verkruysse, Wim, Lars O. Svaasand, and J. Stuart Nelson. 2008. <span>“Remote Plethysmographic Imaging Using Ambient Light.”</span> <em>Optics Express</em> 16 (26): 21434–45. <a href="https://doi.org/10.1364/OE.16.021434">https://doi.org/10.1364/OE.16.021434</a>.
+</div>
+<div id="ref-yang2016cielab_rppg" class="csl-entry" role="listitem">
+Yang, Yuting, Chenbin Liu, Hui Yu, Dangdang Shao, Francis Tsow, and Nongjian Tao. 2016. <span>“Motion Robust Remote Photoplethysmography in CIELab Color Space.”</span> <em>Journal of Biomedical Optics</em> 21 (11): 117001. <a href="https://doi.org/10.1117/1.JBO.21.11.117001">https://doi.org/10.1117/1.JBO.21.11.117001</a>.
+</div>
+</div>
 
 
+</section>
 
 </main> <!-- /main -->
 <script id="quarto-html-after-body" type="application/javascript">

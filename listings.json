@@ -2,8 +2,10 @@
   {
     "listing": "/posts.html",
     "items": [
-      "/posts/firstpost.html",
-      "/posts/testpost.html"
+      "/posts/03-rasppi-setup.html",
+      "/posts/01-firstpost.html",
+      "/posts/testpost.html",
+      "/posts/02-rppgintro.html"
     ]
   }
 ]
