@@ -1,0 +1,125 @@
+---
+title: "Expected Wins Analysis in Fantasy Basketball Using the ESPN API"
+date: 2026-01-21
+categories: [ESPN Fantasy, statistical analysis]
+bibliography: bib/04.bib
+draft: false
+---
+
+My friends and I participate each year in a fantasy ESPN league. Invariably, there are always a few that complain of how unlucky they were in scheduling, and that there were teams that were worse that made finals / finished higher / didn't come last when they didn't.
+
+Because matchups are head-to-head, your record depends partly on *who* you played, not just how many points you scored. Each week 2 teams are matched and the team with the higher score wins. Therefore it is possible to have the 2nd highest score of the week, and lose to the highest scorer. Similarly, it is possible to have the 2nd lowest score of the week and still win because you are playing the lowest scorer that week.
+
+While the _Points For_ and _Points Against_ metrics are often pointed towards as a way of measuring how 'unlucky' you have been with the schedule, this doesn't exactly reflect how good your team is. For example, if you were really good for the first half of the year, but then had a bunch of injuries, you may have won more games than someone who has the same amount of Points For but was just consistently bad.
+
+### Expected Wins
+This led me to develop an _Expected Wins_ metric. The Expected Wins considers the schedule to be random, and for each round awards the fraction of wins you would have had against each opponent in the league.
+
+For example, in a 10-team league, there are 9 possible opponents. If you would have beaten 3 of those opponents, you are awarded 3/9 or ~.33 expected wins. If you would have beaten all teams because you had the highest score of the week, you are awarded 1.0 expected wins, while the lowest gets 0 expected wins.
+
+:::{.callout-note title="A note on league types" collapse="false"}
+This is written for **points leagues**; for categories you’d compute ‘expected category wins’ similarly, but ties are more frequent and need explicit handling.
+:::
+
+### Pulling your League
+
+I pull league data using `espn-api` [@wendt_espn_api_2025].
+
+You start by pulling your league. To do this, you need the `league_id`. In order to do this, go to the ESPN fantasy website on a browser, go the league you want to analyse, and then check the URL. It should be something like `https://fantasy.espn.com/basketball/team?leagueId=xxx`. Also note that for this to work, the league needs to be publicly viewable. [If it is private, you also need a SWID and ESPN_S2 value](https://github.com/cwendt94/espn-api/discussions/150). I am using a random league (not mine) with a public ID for this post.
+
+```{python}
+#!pip install espn_api #-install if needed
+from espn_api.basketball import League
+
+league = League(league_id=727593540, year=2025)
+```
+
+
+```{python}
+num_teams = len(league.teams)
+print(f"There are {num_teams} teams in this league")
+```
+
+We now want to iterate through each team and each round and collect results into a NumPy array. I print the number of games for each team to ensure they are the same.
+```{python}
+#!pip install espn-api  # install if needed
+from espn_api.basketball import League
+import numpy as np
+
+league = League(league_id=727593540, year=2025)
+
+teams = league.teams
+num_teams = len(teams)
+print(f"There are {num_teams} teams in this league")
+
+# Use the minimum completed games across teams
+num_weeks = min(t.wins + t.losses + t.ties for t in teams)
+
+results = np.zeros((num_teams, num_weeks, 2), dtype=float)
+
+for i, team in enumerate(teams):
+    played = team.wins + team.losses + team.ties
+    print(f"{team} has played {played} games.")
+    for w in range(num_weeks):
+        matchup = team.schedule[w]
+        if team == matchup.home_team:
+            team_score = matchup.home_final_score
+            opp_score = matchup.away_final_score
+        else:
+            team_score = matchup.away_final_score
+            opp_score = matchup.home_final_score
+
+        results[i, w, 0] = team_score
+        results[i, w, 1] = opp_score
+```
+
+
+Now we have the results, we can analyse using the *Expected Wins* metric I described earlier. 
+```{python}
+import tabulate as tb
+
+expected_wins = np.zeros(num_teams, dtype=float)
+
+# Tie-safe expected wins:
+# expected wins that week = (#strictly lower + 0.5*#equal) / (n-1)
+for w in range(num_weeks):
+    week_scores = results[:, w, 0]
+    for i in range(num_teams):
+        s = week_scores[i]
+        lower = np.sum(week_scores < s)
+        equal = np.sum(week_scores == s) - 1  # exclude self
+        expected_wins[i] += (lower + 0.5 * equal) / (num_teams - 1)
+
+table = [["Team", "Expected Wins", "Actual Wins", "Difference (Actual - Expected)"]]
+for i, team in enumerate(league.teams):
+    team_name = str(team).replace("Team(", "").replace(")", "")
+    actual_wins = team.wins
+    diff = actual_wins - expected_wins[i]
+    table.append([team_name, round(expected_wins[i], 2), actual_wins, round(diff, 2)])
+
+sorted_table = sorted(table[1:], key=lambda x: x[1], reverse=True)
+sorted_table.insert(0, table[0])
+
+#print(tb.tabulate(sorted_table, headers="firstrow"))
+
+```
+
+
+```{python}
+#| label: tbl-expected-wins
+#| tbl-cap: "Expected wins vs actual wins"
+#| echo: false
+import pandas as pd
+from IPython.display import Markdown
+
+df = pd.DataFrame(sorted_table[1:], columns=sorted_table[0])
+Markdown(df.to_markdown(index=False))
+```
+And there you have it. Those with a positive difference had more expected wins than actual wins- they were 'lucky' in their scheduling, and vice versa with the negative differences- they were 'unlucky'.
+
+I hope this provides some ammunition in the never-ending complaints over who had been hard done by!
+
+## References
+
+::: {#refs}
+:::
