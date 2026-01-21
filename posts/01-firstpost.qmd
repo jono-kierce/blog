@@ -1,7 +1,7 @@
 ---
 title: "An Idea, or two"
 date: 2026-01-13
-categories: [gym-project]
+categories: [gym project, computer vision]
 ---
 
 A quick welcome to my blog. I had this idea a while ago, to create a blog to show personal projects and the like now that I've graduated university. To be honest, I'm not sure of my target audience, if there is one, but I'm hopeful that having this will motivate me to a) complete personal projects and b) complete them more stringently.
