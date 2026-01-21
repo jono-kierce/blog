@@ -1,5 +1,13 @@
 ---
 title: "My Blog"
+listing:
+  contents: posts
+  sort: "date desc"
+  type: grid
+  max-items: 6
+  feed: true
+  fields: [image, date, title, description, categories]
 ---
 
-Welcome to my blog. I will pop random side quests I'm completing here.
+Welcome to my blog. I will pop random side quests I'm completing here. Here are my latest posts:
+
