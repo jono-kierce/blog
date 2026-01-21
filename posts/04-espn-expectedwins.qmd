@@ -6,11 +6,11 @@ bibliography: bib/04.bib
 draft: false
 ---
 
-My friends and I participate each year in a fantasy ESPN league. Invariably, there are always a few that complain of how unlucky they were in scheduling, and that there were teams that were worse that made finals / finished higher / didn't come last when they didn't.
+My friends and I participate each year in a fantasy ESPN league. Invariably, there are always a few that complain of how unlucky they were in scheduling, and that there were teams that were worse that made finals/finished higher/didn't come last instead.
 
-Because matchups are head-to-head, your record depends partly on *who* you played, not just how many points you scored. Each week 2 teams are matched and the team with the higher score wins. Therefore it is possible to have the 2nd highest score of the week, and lose to the highest scorer. Similarly, it is possible to have the 2nd lowest score of the week and still win because you are playing the lowest scorer that week.
+There is (some) merit to these complaints. Because matchups are head-to-head, your record depends partly on *who* you played, not just how many points you scored. Each week 2 teams are matched and the team with the higher score wins. Therefore it is possible to have the 2nd highest score of the week, and lose to the highest scorer. Similarly, it is possible to have the 2nd lowest score of the week and still win because you are playing the lowest scorer that week.
 
-While the _Points For_ and _Points Against_ metrics are often pointed towards as a way of measuring how 'unlucky' you have been with the schedule, this doesn't exactly reflect how good your team is. For example, if you were really good for the first half of the year, but then had a bunch of injuries, you may have won more games than someone who has the same amount of Points For but was just consistently bad.
+While the _Points For_ and _Points Against_ metrics are often pointed to as a way of measuring how 'unlucky' you have been with the schedule, this doesn't exactly reflect how good your team is. For example, if you were really good for the first half of the year, but then had a bunch of injuries, you may have won more games than someone who has the same amount of Points For but was just consistently bad.
 
 ### Expected Wins
 This led me to develop an _Expected Wins_ metric. The Expected Wins considers the schedule to be random, and for each round awards the fraction of wins you would have had against each opponent in the league.
@@ -23,12 +23,12 @@ This is written for **points leagues**; for categories you’d compute ‘expect
 
 ### Pulling your League
 
-I pull league data using `espn-api` [@wendt_espn_api_2025].
+I pull league data using `espn_api` [@wendt_espn_api_2025].
 
-You start by pulling your league. To do this, you need the `league_id`. In order to do this, go to the ESPN fantasy website on a browser, go the league you want to analyse, and then check the URL. It should be something like `https://fantasy.espn.com/basketball/team?leagueId=xxx`. Also note that for this to work, the league needs to be publicly viewable. [If it is private, you also need a SWID and ESPN_S2 value](https://github.com/cwendt94/espn-api/discussions/150). I am using a random league (not mine) with a public ID for this post.
+You start by pulling your league. To do this, you need the `league_id`. In order to do this, go to the ESPN fantasy website on a browser, go the league you want to analyse, and then check the URL. It should be something like `https://fantasy.espn.com/basketball/team?leagueId=xxx`, where `xxx` is your league ID. Also note that for this to work, the league needs to be publicly viewable. If it is private, [you also need a SWID and ESPN_S2 value](https://github.com/cwendt94/espn-api/discussions/150). I am using a random league (not mine) with a public ID for this post.
 
 ```{python}
-#!pip install espn_api #-install if needed
+#!pip install espn_api # install espn_api package if needed
 from espn_api.basketball import League
 
 league = League(league_id=727593540, year=2025)
@@ -40,7 +40,7 @@ num_teams = len(league.teams)
 print(f"There are {num_teams} teams in this league")
 ```
 
-We now want to iterate through each team and each round and collect results into a NumPy array. I print the number of games for each team to ensure they are the same.
+We now want to iterate through each team / round and collect results into a NumPy array. I print the number of games for each team to ensure they are the same.
 ```{python}
 #!pip install espn-api  # install if needed
 from espn_api.basketball import League
@@ -76,8 +76,6 @@ for i, team in enumerate(teams):
 
 Now we have the results, we can analyse using the *Expected Wins* metric I described earlier. 
 ```{python}
-import tabulate as tb
-
 expected_wins = np.zeros(num_teams, dtype=float)
 
 # Tie-safe expected wins:
@@ -117,7 +115,7 @@ Markdown(df.to_markdown(index=False))
 ```
 And there you have it. Those with a positive difference had more expected wins than actual wins- they were 'lucky' in their scheduling, and vice versa with the negative differences- they were 'unlucky'.
 
-I hope this provides some ammunition in the never-ending complaints over who had been hard done by!
+I hope this provides some help in settling the never-ending complaints over who has been hard done by!
 
 ## References
 
