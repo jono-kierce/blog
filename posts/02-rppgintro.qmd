@@ -1,0 +1,179 @@
+---
+title: "Introduction to Remote Photoplethysmography (rPPG)"
+date: 2025-12-12
+categories: [rPPG]
+bibliography: bib/02.bib
+draft: false
+---
+
+Over the past year, as part of my Bachelor of Engineering, I've been working on a remote photoplethysmography project, with specific contributions of creating an iOS application, and of extending this work into Atrial Fibrillation (AF) detection.
+I thought it might be interesting to write about rPPG from a few perspectives. This post is a quick crash course collating the general state-of-the-field as discovered while researching this project.
+
+### What is rPPG?
+
+In order to understand rPPG, it would be good to first introduce photoplethysmography. Photoplethysmography is a technique used to detect changes in blood volume based off changes in skin luminance. This is a super common technique- you see it everyday in your Apple Watch/ Fitbit/ Garmin. A light (typically green) shines from the wrist-based watch. A light sensor monitors how much of that comes back. Based on that, you can read a user's heart rate, and increasingly other information such as heart rate variability (HRV) or blood oxygen levels. 
+The below figure, from @ppg_img, is a pretty good illustration:
+![PPG illustration (source: @ppg_img)](https://www.researchgate.net/publication/338723696/figure/fig8/AS:11431281391063538@1745306386021/Principle-of-photoplethysmography-PPG-104-a-reflective-mode-b-transmitting.tif){width=50%}
+
+That’s photoplethysmography. *Remote* photoplethysmography (rPPG) applies the same idea without skin contact, using a video feed. As blood volume changes, the skin’s reflectance shifts subtly over time, and a camera can pick up those tiny variations. The challenge is that video introduces many more sources of noise than a wrist-worn sensor, which controls lighting, distance, and motion much more tightly.
+
+### A general overview of rPPG
+
+There are many different techniques used in rPPG but they generally follow this pipeline:
+
+1. **Capture video**
+Video is taken, typically of a face.
+
+2. **Track region(s) of interest**
+It is necessary to decide upon an area of the face from which the signal will be extracted. A face is tracked using a landmarking model, such as Davis E. King's [DLib 68-point landmark model](https://github.com/davisking/dlib-models) [@DLib_shape_predictor_68]. As the name implies, the model identifies 68 key points on the face. You can then reference these to create consistent areas on the face to track. 
+
+![Location of the 68 landmarks tracked by the DLib facial detector](https://res.cloudinary.com/dz0couwwr/image/upload/v1768389981/Screenshot_2026-01-14_at_10.23.17_pm_gboh36.png){width=50%}
+
+There has been different work on the best regions of interest (ROIs) to track. A well-structured analysis was done by @roi_selection_assessment and their results agree with the generally held wisdom: the cheeks and forehead are the best places to extract a signal from.
+
+Other work doesn't use areas per se, instead opting for a 'skin mask' that detects the skin on the face and ignores non-pulsatile things such as hair. You can then use the whole identified skin area as your signal.
+
+I think this may be overkill; from experience I've found that the ROI selection is less important than what you do in step 5.
+
+3. **Extract raw colour signals**
+
+For each frame, we now have a lot of information (RGB values) contained within the identified region(s). It is necessary to reduce this down. Typically, a mean of the RGB values is taken, but it is also possible to use a median. There is also other works that use other colour spaces - for example @yang2016cielab_rppg use the CIELab colourspace. 
+
+![An example of a clean signal RGB values across ~900 frames (~30s)](https://res.cloudinary.com/dz0couwwr/image/upload/v1768482473/Screenshot_2026-01-16_at_12.06.33_am_svwxze.png)
+
+4. **Pre-process**
+
+Now that we have a simple signal per frame, the next step is to stop thinking frame-by-frame. Heartbeat is inherently temporal, so almost every rPPG method works on short sliding windows.
+In this step, we can perform simple pre-processing- such as bandpass filtering or normalisation. 
+The below is the result of applying a 4th-order Butterworth filter to the Green signal from the example in step 3. Note the signal is normalised prior to bandpass filtering.
+
+![The bandpass filtered green signal](https://res.cloudinary.com/dz0couwwr/image/upload/v1768482475/Screenshot_2026-01-16_at_12.06.43_am_ajld8n.png)
+
+Note the large spike just after the 500th frame- this signal could benefit from a sliding-window normalisation in order to standardise the peaks.
+
+5. **Convert colour changes to a pulse signal**
+
+This is the step where a lot of research has been conducted and can be considered the 'trick' with rPPG. The earliest rppg paper by @verkruysse2008remote simply took the green signal as the pulsatile component, *"consistent with the fact that (oxy-) hemoglobin absorbs green light better than red and penetrates sufficiently deeper into the skin as compared to blue light to probe the vasculature."*
+
+Further studies have introduced a plethora of new techniques. The general idea of any of these techniques is to maximise the pulsatile component while minimising noise. A good analysis of the main techniques was done by @boccignone2020openframework. A newer analysis was also done by @haugg2022construction. These tend to agree that there is no 'one best' technique- it depends on various factors.
+
+In order to give you a general idea of how these techniques work, I will explain the CHROM projection [@chrom].
+
+:::{.callout-note title="The CHROM projection" collapse="false"}
+
+After normalising the mean RGB traces within the region of interest, let $\tilde r(t)$, $\tilde g(t)$, and $\tilde b(t)$ denote the temporal colour fluctuations. The chrominance components are
+\begin{align}
+X(t) &= 3\,\tilde r(t) - 2\,\tilde g(t),\\
+Y(t) &= \tfrac{3}{2}\,\tilde r(t) + \tilde g(t) - \tfrac{3}{2}\,\tilde b(t),
+\end{align}
+with corresponding standard deviations $\sigma_X$ and $\sigma_Y$ evaluated over the sliding analysis window. The final projected pulse trace is then
+\begin{equation}
+C(t) = X(t) - \frac{\sigma_X}{\sigma_Y} \, Y(t).
+\end{equation}
+
+The projection works in a chrominance subspace to reduce intensity / illumination variation and then adaptively combines $X$ and $Y$ so that the motion/lighting-correlated components cancel (via the $\sigma_X$ / $\sigma_Y$ scaling), leaving a stronger pulsatile trace. 
+
+:::
+
+
+
+6. **Post-process to calculate vital sign(s)**
+
+Now that the signal is into a singular waveform, this can be processed into a signal fairly trivially. Neurokit [@Makowski2021neurokit] has some good resources for this in Python, mostly designed for PPG applications, but they will work similarly with the rPPG signal (provided it is of a good quality).
+
+This is an example I generated using a simulated rppg signal, to illustrate the type of processing it will do:
+```{python}
+#| echo: false
+#| fig-width: 12
+#| fig-height: 7 
+#| fig-cap: "NeuroKit2 processing of a simulated rPPG-like signal."
+
+
+"""
+Synthetic rPPG-like signal -> NeuroKit2 processing -> Heart-rate plot
+
+Install deps:
+  pip install neurokit2 numpy pandas matplotlib scipy
+"""
+
+import numpy as np
+import matplotlib.pyplot as plt
+import neurokit2 as nk
+
+
+def simulate_rppg_like(
+    duration=60,
+    sampling_rate=30,
+    hr_base=75,
+    hr_variation=8,
+    resp_rate=0.25,          # Hz (~15 breaths/min)
+    baseline_wander=0.05,    # Hz
+    noise_std=0.05,
+    motion_artifacts=3,
+    seed=42,
+):
+    rng = np.random.default_rng(seed)
+    t = np.arange(0, duration, 1 / sampling_rate)
+
+    # Slowly varying "true" heart rate (bpm)
+    hr_true = hr_base + hr_variation * np.sin(2 * np.pi * 0.02 * t + 0.7)  # very slow drift
+    f_inst = hr_true / 60.0  # instantaneous frequency in Hz
+
+    # Integrate phase to create a nonstationary oscillator
+    phase = 2 * np.pi * np.cumsum(f_inst) / sampling_rate
+
+    # Make a pulse-like waveform (rPPG/PPG-ish) using harmonics + squashing
+    pulse = (
+        np.sin(phase)
+        + 0.5 * np.sin(2 * phase + 0.6)
+        + 0.2 * np.sin(3 * phase + 1.2)
+    )
+    pulse = np.tanh(1.6 * pulse)  # sharpen peaks a bit
+
+    # Respiratory amplitude modulation
+    amp = 1.0 + 0.12 * np.sin(2 * np.pi * resp_rate * t + 1.0)
+
+    # Baseline wander 
+    baseline = 0.25 * np.sin(2 * np.pi * baseline_wander * t + 0.2)
+
+    # Add noise
+    rppg = amp * pulse + baseline + rng.normal(0, noise_std, size=t.size)
+
+    # Add a few motion artifacts
+    for _ in range(motion_artifacts):
+        start = rng.integers(0, max(1, t.size - int(1.5 * sampling_rate)))
+        length = rng.integers(int(0.3 * sampling_rate), int(1.5 * sampling_rate))
+        burst = rng.normal(0, 0.35, size=length) + 0.25 * rng.standard_normal(length).cumsum() / length
+        rppg[start : start + length] += burst
+
+    # Normalise
+    rppg = (rppg - np.mean(rppg)) / (np.std(rppg) + 1e-12)
+
+    return t, rppg, hr_true
+
+
+def main():
+    sampling_rate = 30
+    duration = 20
+
+    t, rppg, hr_true = simulate_rppg_like(duration=duration, sampling_rate=sampling_rate)
+
+    # NeuroKit2 PPG processing
+    ppg_signals, info = nk.ppg_process(rppg, sampling_rate=sampling_rate)
+
+    hr_est = ppg_signals["PPG_Rate"].to_numpy()
+
+    nk.ppg_plot(ppg_signals, info)
+    plt.tight_layout()
+    plt.show()
+
+
+if __name__ == "__main__":
+    main()
+
+
+```
+## References
+
+::: {#refs}
+:::
