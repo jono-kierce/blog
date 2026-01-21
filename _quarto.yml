@@ -15,3 +15,6 @@ format:
   html:
     theme: cosmo
     css: styles.css
+    grid:
+      body-width: 1200px
+      margin-width: 180px
