@@ -62,7 +62,7 @@ div.csl-indent {
 <link href="../site_libs/quarto-html/quarto-syntax-highlighting-587c61ba64f3a5504c4d52d930310e48.css" rel="stylesheet" id="quarto-text-highlighting-styles">
 <script src="../site_libs/bootstrap/bootstrap.min.js"></script>
 <link href="../site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
-<link href="../site_libs/bootstrap/bootstrap-5b4ad623e5705c0698d39aec6f10cf02.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
+<link href="../site_libs/bootstrap/bootstrap-86b15981ef3184c9134fbfdfd3778736.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
 <script id="quarto-search-options" type="application/json">{
   "location": "navbar",
   "copy-button": false,
@@ -91,6 +91,35 @@ div.csl-indent {
   }
 }</script>
 
+  <script src="https://cdnjs.cloudflare.com/polyfill/v3/polyfill.min.js?features=es6"></script>
+  <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml-full.js" type="text/javascript"></script>
+
+<script type="text/javascript">
+const typesetMath = (el) => {
+  if (window.MathJax) {
+    // MathJax Typeset
+    window.MathJax.typeset([el]);
+  } else if (window.katex) {
+    // KaTeX Render
+    var mathElements = el.getElementsByClassName("math");
+    var macros = [];
+    for (var i = 0; i < mathElements.length; i++) {
+      var texText = mathElements[i].firstChild;
+      if (mathElements[i].tagName == "SPAN" && texText && texText.data) {
+        window.katex.render(texText.data, mathElements[i], {
+          displayMode: mathElements[i].classList.contains('display'),
+          throwOnError: false,
+          macros: macros,
+          fleqn: false
+        });
+      }
+    }
+  }
+}
+window.Quarto = {
+  typesetMath
+};
+</script>
 
 <link rel="stylesheet" href="../styles.css">
 </head>
@@ -189,7 +218,7 @@ div.csl-indent {
 </figure>
 </div>
 <p>There has been different work on the best regions of interest (ROIs) to track. A well-structured analysis was done by <span class="citation" data-cites="roi_selection_assessment">Kim, Lee, and Sohn (<a href="#ref-roi_selection_assessment" role="doc-biblioref">2021</a>)</span> and their results agree with the generally held wisdom: the cheeks and forehead are the best places to extract a signal from.</p>
-<p>There is also other work that doesn’t use areas per say, instead opting for a ‘skin mask’ that detects the skin on the face and ignores non-pulsatile things such as hair. You can then use the whole identified skin area as your signal.</p>
+<p>Other work doesn’t use areas per se, instead opting for a ‘skin mask’ that detects the skin on the face and ignores non-pulsatile things such as hair. You can then use the whole identified skin area as your signal.</p>
 <p>I think this may be overkill; from experience I’ve found that the ROI selection is less important than what you do in step 5.</p>
 <ol start="3" type="1">
 <li><strong>Extract raw colour signals</strong></li>
@@ -198,13 +227,13 @@ div.csl-indent {
 <div class="quarto-figure quarto-figure-center">
 <figure class="figure">
 <p><img src="https://res.cloudinary.com/dz0couwwr/image/upload/v1768482473/Screenshot_2026-01-16_at_12.06.33_am_svwxze.png" class="img-fluid figure-img"></p>
-<figcaption>An example of a great signal RGB values across ~900 frames (~30s)</figcaption>
+<figcaption>An example of a clean signal RGB values across ~900 frames (~30s)</figcaption>
 </figure>
 </div>
 <ol start="4" type="1">
 <li><strong>Pre-process</strong></li>
 </ol>
-<p>Now that we have a simple signal per frame, the next step is to stop thinking frame-by-frame. Heartbeat is inherently temporal, so almost every rPPG method works on short sliding windows. In this step, we can perform simple pre-processing- such as bandpass filtering or normalisation. The below is the result of applying a 4-th order Butterworth filter to the Green signal from the example in step 3. Note the signal is normalised prior to bandpass filtering.</p>
+<p>Now that we have a simple signal per frame, the next step is to stop thinking frame-by-frame. Heartbeat is inherently temporal, so almost every rPPG method works on short sliding windows. In this step, we can perform simple pre-processing- such as bandpass filtering or normalisation. The below is the result of applying a 4th-order Butterworth filter to the Green signal from the example in step 3. Note the signal is normalised prior to bandpass filtering.</p>
 <div class="quarto-figure quarto-figure-center">
 <figure class="figure">
 <p><img src="https://res.cloudinary.com/dz0couwwr/image/upload/v1768482475/Screenshot_2026-01-16_at_12.06.43_am_ajld8n.png" class="img-fluid figure-img"></p>
@@ -216,21 +245,69 @@ div.csl-indent {
 <li><strong>Convert colour changes to a pulse signal</strong></li>
 </ol>
 <p>This is the step where a lot of research has been conducted and can be considered the ‘trick’ with rPPG. The earliest rppg paper by <span class="citation" data-cites="verkruysse2008remote">Verkruysse, Svaasand, and Nelson (<a href="#ref-verkruysse2008remote" role="doc-biblioref">2008</a>)</span> simply took the green signal as the pulsatile component, <em>“consistent with the fact that (oxy-) hemoglobin absorbs green light better than red and penetrates sufficiently deeper into the skin as compared to blue light to probe the vasculature.”</em></p>
+<p>Further studies have introduced a plethora of new techniques. The general idea of any of these techniques is to maximise the pulsatile component while minimising noise. A good analysis of the main techniques was done by <span class="citation" data-cites="boccignone2020openframework">Boccignone et al. (<a href="#ref-boccignone2020openframework" role="doc-biblioref">2020</a>)</span>. A newer analysis was also done by <span class="citation" data-cites="haugg2022construction">Haugg, Elgendi, and Menon (<a href="#ref-haugg2022construction" role="doc-biblioref">2022</a>)</span>. These tend to agree that there is no ‘one best’ technique- it depends on various factors.</p>
+<p>In order to give you a general idea of how these techniques work, I will explain the CHROM projection <span class="citation" data-cites="chrom">(<a href="#ref-chrom" role="doc-biblioref">Haan and Jeanne 2013</a>)</span>.</p>
+<div class="callout callout-style-default callout-note callout-titled" title="The CHROM projection">
+<div class="callout-header d-flex align-content-center" data-bs-toggle="collapse" data-bs-target=".callout-1-contents" aria-controls="callout-1" aria-expanded="true" aria-label="Toggle callout">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Note</span>The CHROM projection
+</div>
+<div class="callout-btn-toggle d-inline-block border-0 py-1 ps-1 pe-0 float-end"><i class="callout-toggle"></i></div>
+</div>
+<div id="callout-1" class="callout-1-contents callout-collapse collapse show">
+<div class="callout-body-container callout-body">
+<p>After normalising the mean RGB traces within the region of interest, let <span class="math inline">\(\tilde r(t)\)</span>, <span class="math inline">\(\tilde g(t)\)</span>, and <span class="math inline">\(\tilde b(t)\)</span> denote the temporal colour fluctuations. The chrominance components are <span class="math display">\[\begin{align}
+X(t) &amp;= 3\,\tilde r(t) - 2\,\tilde g(t),\\
+Y(t) &amp;= \tfrac{3}{2}\,\tilde r(t) + \tilde g(t) - \tfrac{3}{2}\,\tilde b(t),
+\end{align}\]</span> with corresponding standard deviations <span class="math inline">\(\sigma_X\)</span> and <span class="math inline">\(\sigma_Y\)</span> evaluated over the sliding analysis window. The final projected pulse trace is then <span class="math display">\[\begin{equation}
+C(t) = X(t) - \frac{\sigma_X}{\sigma_Y} \, Y(t).
+\end{equation}\]</span></p>
+<p>The projection works in a chrominance subspace to reduce intensity / illumination variation and then adaptively combines <span class="math inline">\(X\)</span> and <span class="math inline">\(Y\)</span> so that the motion/lighting-correlated components cancel (via the <span class="math inline">\(\sigma_X\)</span> / <span class="math inline">\(\sigma_Y\)</span> scaling), leaving a stronger pulsatile trace.</p>
+</div>
+</div>
+</div>
 <ol start="6" type="1">
 <li><strong>Post-process to calculate vital sign(s)</strong></li>
 </ol>
+<p>Now that the signal is into a singular waveform, this can be processed into a signal fairly trivially. Neurokit <span class="citation" data-cites="Makowski2021neurokit">(<a href="#ref-Makowski2021neurokit" role="doc-biblioref">Makowski et al. 2021</a>)</span> has some good resources for this in Python, mostly designed for PPG applications, but they will work similarly with the rPPG signal (provided it is of a good quality).</p>
+<p>This is an example I generated using a simulated rppg signal, to illustrate the type of processing it will do:</p>
+<div id="b1821598" class="cell" data-fig-height="7" data-fig-width="12" data-execution_count="1">
+<div class="cell-output cell-output-display">
+<div class="quarto-figure quarto-figure-center">
+<figure class="figure">
+<p><img src="02-rppgintro_files/figure-html/cell-2-output-1.png" width="791" height="475" class="figure-img"></p>
+<figcaption>NeuroKit2 processing of a simulated rPPG-like signal.</figcaption>
+</figure>
+</div>
+</div>
+</div>
 </section>
 <section id="references" class="level2">
 <h2 class="anchored" data-anchor-id="references">References</h2>
 <div id="refs" class="references csl-bib-body hanging-indent" data-entry-spacing="0" role="list">
+<div id="ref-boccignone2020openframework" class="csl-entry" role="listitem">
+Boccignone, Giuseppe, Donatello Conte, Vittorio Cuculo, Alessandro D’Amelio, Giuliano Grossi, and Raffaella Lanzarotti. 2020. <span>“An Open Framework for Remote-PPG Methods and Their Assessment.”</span> <em>IEEE Access</em> 8: 216083–103. <a href="https://doi.org/10.1109/ACCESS.2020.3040936">https://doi.org/10.1109/ACCESS.2020.3040936</a>.
+</div>
 <div id="ref-ppg_img" class="csl-entry" role="listitem">
 Dzedzickis, Andrius, Arturas Kaklauskas, and Vytautas Bučinskas. 2020. <span>“Human Emotion Recognition: Review of Sensors and Methods.”</span> <em>Sensors</em> 20 (January): 592. <a href="https://doi.org/10.3390/s20030592">https://doi.org/10.3390/s20030592</a>.
+</div>
+<div id="ref-chrom" class="csl-entry" role="listitem">
+Haan, Gerard de, and Vincent Jeanne. 2013. <span>“Robust Pulse Rate from Chrominance-Based rPPG.”</span> <em>IEEE Transactions on Biomedical Engineering</em> 60 (10): 2878–86. <a href="https://doi.org/10.1109/TBME.2013.2266196">https://doi.org/10.1109/TBME.2013.2266196</a>.
+</div>
+<div id="ref-haugg2022construction" class="csl-entry" role="listitem">
+Haugg, Fridolin, Mohamed Elgendi, and Carlo Menon. 2022. <span>“Effectiveness of Remote PPG Construction Methods: A Preliminary Analysis.”</span> <em>Bioengineering</em> 9 (10): 485. <a href="https://doi.org/10.3390/bioengineering9100485">https://doi.org/10.3390/bioengineering9100485</a>.
 </div>
 <div id="ref-roi_selection_assessment" class="csl-entry" role="listitem">
 Kim, Dae-Yeol, Kwangkee Lee, and Chae-Bong Sohn. 2021. <span>“Assessment of ROI Selection for Facial Video-Based rPPG.”</span> <em>Sensors</em> 21 (23). <a href="https://doi.org/10.3390/s21237923">https://doi.org/10.3390/s21237923</a>.
 </div>
 <div id="ref-DLib_shape_predictor_68" class="csl-entry" role="listitem">
 King, Davis E. 2015. <span>“Shape_predictor_68_face_landmarks.dat.bz2.”</span> Dlib model file download. <a href="http://dlib.net/files/shape_predictor_68_face_landmarks.dat.bz2">http://dlib.net/files/shape_predictor_68_face_landmarks.dat.bz2</a>.
+</div>
+<div id="ref-Makowski2021neurokit" class="csl-entry" role="listitem">
+Makowski, Dominique, Tam Pham, Zen J. Lau, Jan C. Brammer, François Lespinasse, Hung Pham, Christopher Schölzel, and S. H. Annabel Chen. 2021. <span>“<span>NeuroKit</span>2: A Python Toolbox for Neurophysiological Signal Processing.”</span> <em>Behavior Research Methods</em> 53 (4): 1689–96. <a href="https://doi.org/10.3758/s13428-020-01516-y">https://doi.org/10.3758/s13428-020-01516-y</a>.
 </div>
 <div id="ref-verkruysse2008remote" class="csl-entry" role="listitem">
 Verkruysse, Wim, Lars O. Svaasand, and J. Stuart Nelson. 2008. <span>“Remote Plethysmographic Imaging Using Ambient Light.”</span> <em>Optics Express</em> 16 (26): 21434–45. <a href="https://doi.org/10.1364/OE.16.021434">https://doi.org/10.1364/OE.16.021434</a>.
