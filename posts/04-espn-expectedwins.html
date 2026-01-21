@@ -233,13 +233,13 @@ div.csl-indent {
 <h3 class="anchored" data-anchor-id="pulling-your-league">Pulling your League</h3>
 <p>I pull league data using <code>espn_api</code> <span class="citation" data-cites="wendt_espn_api_2025">(<a href="#ref-wendt_espn_api_2025" role="doc-biblioref">Wendt 2025</a>)</span>.</p>
 <p>You start by pulling your league. To do this, you need the <code>league_id</code>. In order to do this, go to the ESPN fantasy website on a browser, go the league you want to analyse, and then check the URL. It should be something like <code>https://fantasy.espn.com/basketball/team?leagueId=xxx</code>, where <code>xxx</code> is your league ID. Also note that for this to work, the league needs to be publicly viewable. If it is private, <a href="https://github.com/cwendt94/espn-api/discussions/150">you also need a SWID and ESPN_S2 value</a>. I am using a random league (not mine) with a public ID for this post.</p>
-<div id="8d23cc3c" class="cell" data-execution_count="1">
+<div id="e8c0769f" class="cell" data-execution_count="1">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb1"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="co">#!pip install espn_api # install espn_api package if needed</span></span>
 <span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> espn_api.basketball <span class="im">import</span> League</span>
 <span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a>league <span class="op">=</span> League(league_id<span class="op">=</span><span class="dv">727593540</span>, year<span class="op">=</span><span class="dv">2025</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
-<div id="0eefc99c" class="cell" data-execution_count="2">
+<div id="ac70474f" class="cell" data-execution_count="2">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb2"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a>num_teams <span class="op">=</span> <span class="bu">len</span>(league.teams)</span>
 <span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"There are </span><span class="sc">{</span>num_teams<span class="sc">}</span><span class="ss"> teams in this league"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
@@ -247,7 +247,7 @@ div.csl-indent {
 </div>
 </div>
 <p>We now want to iterate through each team / round and collect results into a NumPy array. I print the number of games for each team to ensure they are the same.</p>
-<div id="99555561" class="cell" data-execution_count="3">
+<div id="3a132b3b" class="cell" data-execution_count="3">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb4"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="co">#!pip install espn-api  # install if needed</span></span>
 <span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> espn_api.basketball <span class="im">import</span> League</span>
 <span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> numpy <span class="im">as</span> np</span>
@@ -294,7 +294,7 @@ Team(EA sports) has played 20 games.</code></pre>
 </div>
 </div>
 <p>Now we have the results, we can analyse using the <em>Expected Wins</em> metric I described earlier.</p>
-<div id="a8731116" class="cell" data-execution_count="4">
+<div id="47527def" class="cell" data-execution_count="4">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb6"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a>expected_wins <span class="op">=</span> np.zeros(num_teams, dtype<span class="op">=</span><span class="bu">float</span>)</span>
 <span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a><span class="co"># Tie-safe expected wins:</span></span>

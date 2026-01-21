@@ -1,0 +1,734 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<rss  xmlns:atom="http://www.w3.org/2005/Atom" 
+      xmlns:media="http://search.yahoo.com/mrss/" 
+      xmlns:content="http://purl.org/rss/1.0/modules/content/" 
+      xmlns:dc="http://purl.org/dc/elements/1.1/" 
+      version="2.0">
+<channel>
+<title>My Blog</title>
+<link>https://jonathankierce.com/</link>
+<atom:link href="https://jonathankierce.com/index.xml" rel="self" type="application/rss+xml"/>
+<description></description>
+<generator>quarto-1.8.26</generator>
+<lastBuildDate>Tue, 20 Jan 2026 13:00:00 GMT</lastBuildDate>
+<item>
+  <title>Expected Wins Analysis in Fantasy Basketball Using the ESPN API</title>
+  <dc:creator>Jonathan Kierce</dc:creator>
+  <link>https://jonathankierce.com/posts/04-espn-expectedwins.html</link>
+  <description><![CDATA[ 
+
+
+
+
+<p>My friends and I participate each year in a fantasy ESPN league. Invariably, there are always a few that complain of how unlucky they were in scheduling, and that there were teams that were worse that made finals/finished higher/didn’t come last instead.</p>
+<p>There is (some) merit to these complaints. Because matchups are head-to-head, your record depends partly on <em>who</em> you played, not just how many points you scored. Each week 2 teams are matched and the team with the higher score wins. Therefore it is possible to have the 2nd highest score of the week, and lose to the highest scorer. Similarly, it is possible to have the 2nd lowest score of the week and still win because you are playing the lowest scorer that week.</p>
+<p>While the <em>Points For</em> and <em>Points Against</em> metrics are often pointed to as a way of measuring how ‘unlucky’ you have been with the schedule, this doesn’t exactly reflect how good your team is. For example, if you were really good for the first half of the year, but then had a bunch of injuries, you may have won more games than someone who has the same amount of Points For but was just consistently bad.</p>
+<section id="expected-wins" class="level3">
+<h3 class="anchored" data-anchor-id="expected-wins">Expected Wins</h3>
+<p>This led me to develop an <em>Expected Wins</em> metric. The Expected Wins considers the schedule to be random, and for each round awards the fraction of wins you would have had against each opponent in the league.</p>
+<p>For example, in a 10-team league, there are 9 possible opponents. If you would have beaten 3 of those opponents, you are awarded 3/9 or ~.33 expected wins. If you would have beaten all teams because you had the highest score of the week, you are awarded 1.0 expected wins, while the lowest gets 0 expected wins.</p>
+<div class="callout callout-style-default callout-note callout-titled" title="A note on league types">
+<div class="callout-header d-flex align-content-center" data-bs-toggle="collapse" data-bs-target=".callout-1-contents" aria-controls="callout-1" aria-expanded="true" aria-label="Toggle callout">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Note</span>A note on league types
+</div>
+<div class="callout-btn-toggle d-inline-block border-0 py-1 ps-1 pe-0 float-end"><i class="callout-toggle"></i></div>
+</div>
+<div id="callout-1" class="callout-1-contents callout-collapse collapse show">
+<div class="callout-body-container callout-body">
+<p>This is written for <strong>points leagues</strong>; for categories you’d compute ‘expected category wins’ similarly, but ties are more frequent and need explicit handling.</p>
+</div>
+</div>
+</div>
+</section>
+<section id="pulling-your-league" class="level3">
+<h3 class="anchored" data-anchor-id="pulling-your-league">Pulling your League</h3>
+<p>I pull league data using <code>espn_api</code> <span class="citation" data-cites="wendt_espn_api_2025">(Wendt 2025)</span>.</p>
+<p>You start by pulling your league. To do this, you need the <code>league_id</code>. In order to do this, go to the ESPN fantasy website on a browser, go the league you want to analyse, and then check the URL. It should be something like <code>https://fantasy.espn.com/basketball/team?leagueId=xxx</code>, where <code>xxx</code> is your league ID. Also note that for this to work, the league needs to be publicly viewable. If it is private, <a href="https://github.com/cwendt94/espn-api/discussions/150">you also need a SWID and ESPN_S2 value</a>. I am using a random league (not mine) with a public ID for this post.</p>
+<div id="e8c0769f" class="cell" data-execution_count="1">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb1" style="background: #f1f3f5;"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb1-1"><span class="co" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">#!pip install espn_api # install espn_api package if needed</span></span>
+<span id="cb1-2"><span class="im" style="color: #00769E;
+background-color: null;
+font-style: inherit;">from</span> espn_api.basketball <span class="im" style="color: #00769E;
+background-color: null;
+font-style: inherit;">import</span> League</span>
+<span id="cb1-3"></span>
+<span id="cb1-4">league <span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">=</span> League(league_id<span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">=</span><span class="dv" style="color: #AD0000;
+background-color: null;
+font-style: inherit;">727593540</span>, year<span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">=</span><span class="dv" style="color: #AD0000;
+background-color: null;
+font-style: inherit;">2025</span>)</span></code></pre></div></div>
+</div>
+<div id="ac70474f" class="cell" data-execution_count="2">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb2" style="background: #f1f3f5;"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb2-1">num_teams <span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">=</span> <span class="bu" style="color: null;
+background-color: null;
+font-style: inherit;">len</span>(league.teams)</span>
+<span id="cb2-2"><span class="bu" style="color: null;
+background-color: null;
+font-style: inherit;">print</span>(<span class="ss" style="color: #20794D;
+background-color: null;
+font-style: inherit;">f"There are </span><span class="sc" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">{</span>num_teams<span class="sc" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">}</span><span class="ss" style="color: #20794D;
+background-color: null;
+font-style: inherit;"> teams in this league"</span>)</span></code></pre></div></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>There are 12 teams in this league</code></pre>
+</div>
+</div>
+<p>We now want to iterate through each team / round and collect results into a NumPy array. I print the number of games for each team to ensure they are the same.</p>
+<div id="3a132b3b" class="cell" data-execution_count="3">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb4" style="background: #f1f3f5;"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb4-1"><span class="co" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">#!pip install espn-api  # install if needed</span></span>
+<span id="cb4-2"><span class="im" style="color: #00769E;
+background-color: null;
+font-style: inherit;">from</span> espn_api.basketball <span class="im" style="color: #00769E;
+background-color: null;
+font-style: inherit;">import</span> League</span>
+<span id="cb4-3"><span class="im" style="color: #00769E;
+background-color: null;
+font-style: inherit;">import</span> numpy <span class="im" style="color: #00769E;
+background-color: null;
+font-style: inherit;">as</span> np</span>
+<span id="cb4-4"></span>
+<span id="cb4-5">league <span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">=</span> League(league_id<span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">=</span><span class="dv" style="color: #AD0000;
+background-color: null;
+font-style: inherit;">727593540</span>, year<span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">=</span><span class="dv" style="color: #AD0000;
+background-color: null;
+font-style: inherit;">2025</span>)</span>
+<span id="cb4-6"></span>
+<span id="cb4-7">teams <span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">=</span> league.teams</span>
+<span id="cb4-8">num_teams <span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">=</span> <span class="bu" style="color: null;
+background-color: null;
+font-style: inherit;">len</span>(teams)</span>
+<span id="cb4-9"><span class="bu" style="color: null;
+background-color: null;
+font-style: inherit;">print</span>(<span class="ss" style="color: #20794D;
+background-color: null;
+font-style: inherit;">f"There are </span><span class="sc" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">{</span>num_teams<span class="sc" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">}</span><span class="ss" style="color: #20794D;
+background-color: null;
+font-style: inherit;"> teams in this league"</span>)</span>
+<span id="cb4-10"></span>
+<span id="cb4-11"><span class="co" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;"># Use the minimum completed games across teams</span></span>
+<span id="cb4-12">num_weeks <span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">=</span> <span class="bu" style="color: null;
+background-color: null;
+font-style: inherit;">min</span>(t.wins <span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">+</span> t.losses <span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">+</span> t.ties <span class="cf" style="color: #003B4F;
+background-color: null;
+font-weight: bold;
+font-style: inherit;">for</span> t <span class="kw" style="color: #003B4F;
+background-color: null;
+font-weight: bold;
+font-style: inherit;">in</span> teams)</span>
+<span id="cb4-13"></span>
+<span id="cb4-14">results <span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">=</span> np.zeros((num_teams, num_weeks, <span class="dv" style="color: #AD0000;
+background-color: null;
+font-style: inherit;">2</span>), dtype<span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">=</span><span class="bu" style="color: null;
+background-color: null;
+font-style: inherit;">float</span>)</span>
+<span id="cb4-15"></span>
+<span id="cb4-16"><span class="cf" style="color: #003B4F;
+background-color: null;
+font-weight: bold;
+font-style: inherit;">for</span> i, team <span class="kw" style="color: #003B4F;
+background-color: null;
+font-weight: bold;
+font-style: inherit;">in</span> <span class="bu" style="color: null;
+background-color: null;
+font-style: inherit;">enumerate</span>(teams):</span>
+<span id="cb4-17">    played <span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">=</span> team.wins <span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">+</span> team.losses <span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">+</span> team.ties</span>
+<span id="cb4-18">    <span class="bu" style="color: null;
+background-color: null;
+font-style: inherit;">print</span>(<span class="ss" style="color: #20794D;
+background-color: null;
+font-style: inherit;">f"</span><span class="sc" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">{</span>team<span class="sc" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">}</span><span class="ss" style="color: #20794D;
+background-color: null;
+font-style: inherit;"> has played </span><span class="sc" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">{</span>played<span class="sc" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">}</span><span class="ss" style="color: #20794D;
+background-color: null;
+font-style: inherit;"> games."</span>)</span>
+<span id="cb4-19">    <span class="cf" style="color: #003B4F;
+background-color: null;
+font-weight: bold;
+font-style: inherit;">for</span> w <span class="kw" style="color: #003B4F;
+background-color: null;
+font-weight: bold;
+font-style: inherit;">in</span> <span class="bu" style="color: null;
+background-color: null;
+font-style: inherit;">range</span>(num_weeks):</span>
+<span id="cb4-20">        matchup <span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">=</span> team.schedule[w]</span>
+<span id="cb4-21">        <span class="cf" style="color: #003B4F;
+background-color: null;
+font-weight: bold;
+font-style: inherit;">if</span> team <span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">==</span> matchup.home_team:</span>
+<span id="cb4-22">            team_score <span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">=</span> matchup.home_final_score</span>
+<span id="cb4-23">            opp_score <span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">=</span> matchup.away_final_score</span>
+<span id="cb4-24">        <span class="cf" style="color: #003B4F;
+background-color: null;
+font-weight: bold;
+font-style: inherit;">else</span>:</span>
+<span id="cb4-25">            team_score <span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">=</span> matchup.away_final_score</span>
+<span id="cb4-26">            opp_score <span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">=</span> matchup.home_final_score</span>
+<span id="cb4-27"></span>
+<span id="cb4-28">        results[i, w, <span class="dv" style="color: #AD0000;
+background-color: null;
+font-style: inherit;">0</span>] <span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">=</span> team_score</span>
+<span id="cb4-29">        results[i, w, <span class="dv" style="color: #AD0000;
+background-color: null;
+font-style: inherit;">1</span>] <span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">=</span> opp_score</span></code></pre></div></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>There are 12 teams in this league
+Team(Pete's Bucket Boys) has played 20 games.
+Team(Boston Celtics) has played 20 games.
+Team(Rachid's Rowdy Team) has played 20 games.
+Team(Perfect ur Rob) has played 20 games.
+Team(All Jams! no Peanut Butter! ) has played 20 games.
+Team(Gustavo's Great Team) has played 20 games.
+Team(BadrTheBest) has played 20 games.
+Team(SAN ANTONIO SPURS) has played 20 games.
+Team(Leon Rose On The Phone) has played 20 games.
+Team(Msnsnsnsnn's Magnificent Team) has played 20 games.
+Team(Trash League) has played 20 games.
+Team(EA sports) has played 20 games.</code></pre>
+</div>
+</div>
+<p>Now we have the results, we can analyse using the <em>Expected Wins</em> metric I described earlier.</p>
+<div id="47527def" class="cell" data-execution_count="4">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb6" style="background: #f1f3f5;"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb6-1">expected_wins <span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">=</span> np.zeros(num_teams, dtype<span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">=</span><span class="bu" style="color: null;
+background-color: null;
+font-style: inherit;">float</span>)</span>
+<span id="cb6-2"></span>
+<span id="cb6-3"><span class="co" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;"># Tie-safe expected wins:</span></span>
+<span id="cb6-4"><span class="co" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;"># expected wins that week = (#strictly lower + 0.5*#equal) / (n-1)</span></span>
+<span id="cb6-5"><span class="cf" style="color: #003B4F;
+background-color: null;
+font-weight: bold;
+font-style: inherit;">for</span> w <span class="kw" style="color: #003B4F;
+background-color: null;
+font-weight: bold;
+font-style: inherit;">in</span> <span class="bu" style="color: null;
+background-color: null;
+font-style: inherit;">range</span>(num_weeks):</span>
+<span id="cb6-6">    week_scores <span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">=</span> results[:, w, <span class="dv" style="color: #AD0000;
+background-color: null;
+font-style: inherit;">0</span>]</span>
+<span id="cb6-7">    <span class="cf" style="color: #003B4F;
+background-color: null;
+font-weight: bold;
+font-style: inherit;">for</span> i <span class="kw" style="color: #003B4F;
+background-color: null;
+font-weight: bold;
+font-style: inherit;">in</span> <span class="bu" style="color: null;
+background-color: null;
+font-style: inherit;">range</span>(num_teams):</span>
+<span id="cb6-8">        s <span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">=</span> week_scores[i]</span>
+<span id="cb6-9">        lower <span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">=</span> np.<span class="bu" style="color: null;
+background-color: null;
+font-style: inherit;">sum</span>(week_scores <span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">&lt;</span> s)</span>
+<span id="cb6-10">        equal <span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">=</span> np.<span class="bu" style="color: null;
+background-color: null;
+font-style: inherit;">sum</span>(week_scores <span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">==</span> s) <span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">-</span> <span class="dv" style="color: #AD0000;
+background-color: null;
+font-style: inherit;">1</span>  <span class="co" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;"># exclude self</span></span>
+<span id="cb6-11">        expected_wins[i] <span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">+=</span> (lower <span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">+</span> <span class="fl" style="color: #AD0000;
+background-color: null;
+font-style: inherit;">0.5</span> <span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">*</span> equal) <span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">/</span> (num_teams <span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">-</span> <span class="dv" style="color: #AD0000;
+background-color: null;
+font-style: inherit;">1</span>)</span>
+<span id="cb6-12"></span>
+<span id="cb6-13">table <span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">=</span> [[<span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">"Team"</span>, <span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">"Expected Wins"</span>, <span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">"Actual Wins"</span>, <span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">"Difference (Actual - Expected)"</span>]]</span>
+<span id="cb6-14"><span class="cf" style="color: #003B4F;
+background-color: null;
+font-weight: bold;
+font-style: inherit;">for</span> i, team <span class="kw" style="color: #003B4F;
+background-color: null;
+font-weight: bold;
+font-style: inherit;">in</span> <span class="bu" style="color: null;
+background-color: null;
+font-style: inherit;">enumerate</span>(league.teams):</span>
+<span id="cb6-15">    team_name <span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">=</span> <span class="bu" style="color: null;
+background-color: null;
+font-style: inherit;">str</span>(team).replace(<span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">"Team("</span>, <span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">""</span>).replace(<span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">")"</span>, <span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">""</span>)</span>
+<span id="cb6-16">    actual_wins <span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">=</span> team.wins</span>
+<span id="cb6-17">    diff <span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">=</span> actual_wins <span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">-</span> expected_wins[i]</span>
+<span id="cb6-18">    table.append([team_name, <span class="bu" style="color: null;
+background-color: null;
+font-style: inherit;">round</span>(expected_wins[i], <span class="dv" style="color: #AD0000;
+background-color: null;
+font-style: inherit;">2</span>), actual_wins, <span class="bu" style="color: null;
+background-color: null;
+font-style: inherit;">round</span>(diff, <span class="dv" style="color: #AD0000;
+background-color: null;
+font-style: inherit;">2</span>)])</span>
+<span id="cb6-19"></span>
+<span id="cb6-20">sorted_table <span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">=</span> <span class="bu" style="color: null;
+background-color: null;
+font-style: inherit;">sorted</span>(table[<span class="dv" style="color: #AD0000;
+background-color: null;
+font-style: inherit;">1</span>:], key<span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">=</span><span class="kw" style="color: #003B4F;
+background-color: null;
+font-weight: bold;
+font-style: inherit;">lambda</span> x: x[<span class="dv" style="color: #AD0000;
+background-color: null;
+font-style: inherit;">1</span>], reverse<span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">=</span><span class="va" style="color: #111111;
+background-color: null;
+font-style: inherit;">True</span>)</span>
+<span id="cb6-21">sorted_table.insert(<span class="dv" style="color: #AD0000;
+background-color: null;
+font-style: inherit;">0</span>, table[<span class="dv" style="color: #AD0000;
+background-color: null;
+font-style: inherit;">0</span>])</span>
+<span id="cb6-22"></span>
+<span id="cb6-23"><span class="co" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">#print(tb.tabulate(sorted_table, headers="firstrow"))</span></span></code></pre></div></div>
+</div>
+<div class="cell" data-execution_count="5">
+<div id="tbl-expected-wins" class="cell quarto-float quarto-figure quarto-figure-center anchored" data-execution_count="5">
+<figure class="quarto-float quarto-float-tbl figure">
+<figcaption class="quarto-float-caption-top quarto-float-caption quarto-float-tbl" id="tbl-expected-wins-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Table&nbsp;1: Expected wins vs actual wins
+</figcaption>
+<div aria-describedby="tbl-expected-wins-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<div class="cell-output cell-output-display cell-output-markdown" data-execution_count="5">
+<table class="do-not-create-environment cell caption-top table table-sm table-striped small">
+<colgroup>
+<col style="width: 31%">
+<col style="width: 17%">
+<col style="width: 15%">
+<col style="width: 35%">
+</colgroup>
+<thead>
+<tr class="header">
+<th style="text-align: left;">Team</th>
+<th style="text-align: right;">Expected Wins</th>
+<th style="text-align: right;">Actual Wins</th>
+<th style="text-align: right;">Difference (Actual - Expected)</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: left;">Leon Rose On The Phone</td>
+<td style="text-align: right;">16.82</td>
+<td style="text-align: right;">19</td>
+<td style="text-align: right;">2.18</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">All Jams! no Peanut Butter!</td>
+<td style="text-align: right;">16.45</td>
+<td style="text-align: right;">16</td>
+<td style="text-align: right;">-0.45</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">EA sports</td>
+<td style="text-align: right;">15.27</td>
+<td style="text-align: right;">14</td>
+<td style="text-align: right;">-1.27</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">BadrTheBest</td>
+<td style="text-align: right;">12.64</td>
+<td style="text-align: right;">13</td>
+<td style="text-align: right;">0.36</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Rachid’s Rowdy Team</td>
+<td style="text-align: right;">11.27</td>
+<td style="text-align: right;">12</td>
+<td style="text-align: right;">0.73</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Perfect ur Rob</td>
+<td style="text-align: right;">11</td>
+<td style="text-align: right;">8</td>
+<td style="text-align: right;">-3</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Msnsnsnsnn’s Magnificent Team</td>
+<td style="text-align: right;">10.82</td>
+<td style="text-align: right;">12</td>
+<td style="text-align: right;">1.18</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Gustavo’s Great Team</td>
+<td style="text-align: right;">10.73</td>
+<td style="text-align: right;">13</td>
+<td style="text-align: right;">2.27</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Pete’s Bucket Boys</td>
+<td style="text-align: right;">8.18</td>
+<td style="text-align: right;">7</td>
+<td style="text-align: right;">-1.18</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Boston Celtics</td>
+<td style="text-align: right;">5</td>
+<td style="text-align: right;">4</td>
+<td style="text-align: right;">-1</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">SAN ANTONIO SPURS</td>
+<td style="text-align: right;">1.73</td>
+<td style="text-align: right;">2</td>
+<td style="text-align: right;">0.27</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Trash League</td>
+<td style="text-align: right;">0.09</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">-0.09</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+</figure>
+</div>
+</div>
+<p>And there you have it. Those with a positive difference had more expected wins than actual wins- they were ‘lucky’ in their scheduling, and vice versa with the negative differences- they were ‘unlucky’.</p>
+<p>I hope this provides some help in settling the never-ending complaints over who has been hard done by!</p>
+</section>
+<section id="references" class="level2">
+<h2 class="anchored" data-anchor-id="references">References</h2>
+<div id="refs" class="references csl-bib-body hanging-indent" data-entry-spacing="0">
+<div id="ref-wendt_espn_api_2025" class="csl-entry">
+Wendt, Christian. 2025. <span>“Espn-Api: ESPN Fantasy API (Football, Basketball).”</span> <a href="https://github.com/cwendt94/espn-api">https://github.com/cwendt94/espn-api</a>.
+</div>
+</div>
+
+
+</section>
+
+ ]]></description>
+  <category>ESPN Fantasy</category>
+  <category>statistical analysis</category>
+  <guid>https://jonathankierce.com/posts/04-espn-expectedwins.html</guid>
+  <pubDate>Tue, 20 Jan 2026 13:00:00 GMT</pubDate>
+</item>
+<item>
+  <title>Initial Hardware Setup</title>
+  <dc:creator>Jonathan Kierce</dc:creator>
+  <link>https://jonathankierce.com/posts/03-rasppi-setup.html</link>
+  <description><![CDATA[ 
+
+
+
+
+<p>Today I received the parcel with my hardware, meaning it’s time to stop talking about this project and start doing!</p>
+<p>I elected for a Raspberry Pi 5. I set it up according to <a href="https://www.raspberrypi.com/documentation/computers/getting-started.html">this guide</a>.</p>
+
+
+
+ ]]></description>
+  <category>gym-project</category>
+  <guid>https://jonathankierce.com/posts/03-rasppi-setup.html</guid>
+  <pubDate>Wed, 14 Jan 2026 13:00:00 GMT</pubDate>
+</item>
+<item>
+  <title>An Idea, or two</title>
+  <dc:creator>Jonathan Kierce</dc:creator>
+  <link>https://jonathankierce.com/posts/01-firstpost.html</link>
+  <description><![CDATA[ 
+
+
+
+
+<p>A quick welcome to my blog. I had this idea a while ago, to create a blog to show personal projects and the like now that I’ve graduated university. To be honest, I’m not sure of my target audience, if there is one, but I’m hopeful that having this will motivate me to a) complete personal projects and b) complete them more stringently.</p>
+<p>Now that was one idea. The idea I want to talk about here is a project idea. Those that know me know that these last few months I’ve been building a small basement gym (I’ve been quite gym-obsessed these last ~2 years).</p>
+<p>I was looking at our setup - squat rack in particular - and it struck me how this could be a fantastic computer vision problem. So, my idea is to build a camera-based system that can sit in the basement, pointed at the squat rack, and track:</p>
+<ul>
+<li><p>Exercise type</p>
+<p>I.e squat, bench press, shoulder press etc.</p></li>
+<li><p>Number of repitions</p>
+<p>The number of times each exercise has been performed</p></li>
+<li><p>Weight</p>
+<p>The weight on the barbell</p></li>
+</ul>
+<p>This should be possible, especially for our setup. It is particularly advantageous as we have a bright red barbell and bright rubber weight plates of different colours corresponding to their weights, which should make it possible to differentiate them via camera.</p>
+<div class="quarto-figure quarto-figure-center">
+<figure class="figure">
+<p><img src="https://res.cloudinary.com/dz0couwwr/image/upload/v1768355963/gym-rack_v7xkxf.png" class="img-fluid figure-img" style="width:50.0%"></p>
+<figcaption>Our Squat Rack Setup</figcaption>
+</figure>
+</div>
+<p>The exercise type could be classified based off a pre-existing landmark, which detects specific landmarks of the body, and then passed through a fairly lightweight machine learning model, such as a small CNN. Starting with just a squat, deadlift or bench press, it should be simple enough to classify between these exercises, and we can extend further once we have completed that. Finally, the number of repitions could be calculated by tracking the height of the barbell, passing through a smoothing filter to remove noise in detection / camera and then counting significant peaks.</p>
+<p>I am thinking about running this on a Raspberry Pi 5. I’m not sure exactly what I’ll do with this data once collected- it could be sent to a Google Sheets, to track everything. Something else that would be cool would be having a screen there showing the data from the completed set, so when you’ve repped out a set of max squats and have blurry vision you’re not left wondering if you made 7 or 8 on that last set.</p>
+
+
+
+ ]]></description>
+  <category>gym project</category>
+  <category>computer vision</category>
+  <guid>https://jonathankierce.com/posts/01-firstpost.html</guid>
+  <pubDate>Mon, 12 Jan 2026 13:00:00 GMT</pubDate>
+</item>
+<item>
+  <title>Introduction to Remote Photoplethysmography (rPPG)</title>
+  <dc:creator>Jonathan Kierce</dc:creator>
+  <link>https://jonathankierce.com/posts/02-rppgintro.html</link>
+  <description><![CDATA[ 
+
+
+
+
+<p>Over the past year, as part of my Bachelor of Engineering, I’ve been working on a remote photoplethysmography project, with specific contributions of creating an iOS application, and of extending this work into Atrial Fibrillation (AF) detection. I thought it might be interesting to write about rPPG from a few perspectives. This post is a quick crash course collating the general state-of-the-field as discovered while researching this project.</p>
+<section id="what-is-rppg" class="level3">
+<h3 class="anchored" data-anchor-id="what-is-rppg">What is rPPG?</h3>
+<p>In order to understand rPPG, it would be good to first introduce photoplethysmography. Photoplethysmography is a technique used to detect changes in blood volume based off changes in skin luminance. This is a super common technique- you see it everyday in your Apple Watch/ Fitbit/ Garmin. A light (typically green) shines from the wrist-based watch. A light sensor monitors how much of that comes back. Based on that, you can read a user’s heart rate, and increasingly other information such as heart rate variability (HRV) or blood oxygen levels. The below figure, from <span class="citation" data-cites="ppg_img">Dzedzickis, Kaklauskas, and Bučinskas (2020)</span>, is a pretty good illustration: <img src="https://www.researchgate.net/publication/338723696/figure/fig8/AS:11431281391063538@1745306386021/Principle-of-photoplethysmography-PPG-104-a-reflective-mode-b-transmitting.tif" class="img-fluid" style="width:50.0%" alt="PPG illustration (source: Dzedzickis, Kaklauskas, and Bučinskas (2020))"></p>
+<p>That’s photoplethysmography. <em>Remote</em> photoplethysmography (rPPG) applies the same idea without skin contact, using a video feed. As blood volume changes, the skin’s reflectance shifts subtly over time, and a camera can pick up those tiny variations. The challenge is that video introduces many more sources of noise than a wrist-worn sensor, which controls lighting, distance, and motion much more tightly.</p>
+</section>
+<section id="a-general-overview-of-rppg" class="level3">
+<h3 class="anchored" data-anchor-id="a-general-overview-of-rppg">A general overview of rPPG</h3>
+<p>There are many different techniques used in rPPG but they generally follow this pipeline:</p>
+<ol type="1">
+<li><p><strong>Capture video</strong> Video is taken, typically of a face.</p></li>
+<li><p><strong>Track region(s) of interest</strong> It is necessary to decide upon an area of the face from which the signal will be extracted. A face is tracked using a landmarking model, such as Davis E. King’s <a href="https://github.com/davisking/dlib-models">DLib 68-point landmark model</a> <span class="citation" data-cites="DLib_shape_predictor_68">(King 2015)</span>. As the name implies, the model identifies 68 key points on the face. You can then reference these to create consistent areas on the face to track.</p></li>
+</ol>
+<div class="quarto-figure quarto-figure-center">
+<figure class="figure">
+<p><img src="https://res.cloudinary.com/dz0couwwr/image/upload/v1768389981/Screenshot_2026-01-14_at_10.23.17_pm_gboh36.png" class="img-fluid figure-img" style="width:50.0%"></p>
+<figcaption>Location of the 68 landmarks tracked by the DLib facial detector</figcaption>
+</figure>
+</div>
+<p>There has been different work on the best regions of interest (ROIs) to track. A well-structured analysis was done by <span class="citation" data-cites="roi_selection_assessment">Kim, Lee, and Sohn (2021)</span> and their results agree with the generally held wisdom: the cheeks and forehead are the best places to extract a signal from.</p>
+<p>Other work doesn’t use areas per se, instead opting for a ‘skin mask’ that detects the skin on the face and ignores non-pulsatile things such as hair. You can then use the whole identified skin area as your signal.</p>
+<p>I think this may be overkill; from experience I’ve found that the ROI selection is less important than what you do in step 5.</p>
+<ol start="3" type="1">
+<li><strong>Extract raw colour signals</strong></li>
+</ol>
+<p>For each frame, we now have a lot of information (RGB values) contained within the identified region(s). It is necessary to reduce this down. Typically, a mean of the RGB values is taken, but it is also possible to use a median. There is also other works that use other colour spaces - for example <span class="citation" data-cites="yang2016cielab_rppg">Yang et al. (2016)</span> use the CIELab colourspace.</p>
+<div class="quarto-figure quarto-figure-center">
+<figure class="figure">
+<p><img src="https://res.cloudinary.com/dz0couwwr/image/upload/v1768482473/Screenshot_2026-01-16_at_12.06.33_am_svwxze.png" class="img-fluid figure-img"></p>
+<figcaption>An example of a clean signal RGB values across ~900 frames (~30s)</figcaption>
+</figure>
+</div>
+<ol start="4" type="1">
+<li><strong>Pre-process</strong></li>
+</ol>
+<p>Now that we have a simple signal per frame, the next step is to stop thinking frame-by-frame. Heartbeat is inherently temporal, so almost every rPPG method works on short sliding windows. In this step, we can perform simple pre-processing- such as bandpass filtering or normalisation. The below is the result of applying a 4th-order Butterworth filter to the Green signal from the example in step 3. Note the signal is normalised prior to bandpass filtering.</p>
+<div class="quarto-figure quarto-figure-center">
+<figure class="figure">
+<p><img src="https://res.cloudinary.com/dz0couwwr/image/upload/v1768482475/Screenshot_2026-01-16_at_12.06.43_am_ajld8n.png" class="img-fluid figure-img"></p>
+<figcaption>The bandpass filtered green signal</figcaption>
+</figure>
+</div>
+<p>Note the large spike just after the 500th frame- this signal could benefit from a sliding-window normalisation in order to standardise the peaks.</p>
+<ol start="5" type="1">
+<li><strong>Convert colour changes to a pulse signal</strong></li>
+</ol>
+<p>This is the step where a lot of research has been conducted and can be considered the ‘trick’ with rPPG. The earliest rppg paper by <span class="citation" data-cites="verkruysse2008remote">Verkruysse, Svaasand, and Nelson (2008)</span> simply took the green signal as the pulsatile component, <em>“consistent with the fact that (oxy-) hemoglobin absorbs green light better than red and penetrates sufficiently deeper into the skin as compared to blue light to probe the vasculature.”</em></p>
+<p>Further studies have introduced a plethora of new techniques. The general idea of any of these techniques is to maximise the pulsatile component while minimising noise. A good analysis of the main techniques was done by <span class="citation" data-cites="boccignone2020openframework">Boccignone et al. (2020)</span>. A newer analysis was also done by <span class="citation" data-cites="haugg2022construction">Haugg, Elgendi, and Menon (2022)</span>. These tend to agree that there is no ‘one best’ technique- it depends on various factors.</p>
+<p>In order to give you a general idea of how these techniques work, I will explain the CHROM projection <span class="citation" data-cites="chrom">(Haan and Jeanne 2013)</span>.</p>
+<div class="callout callout-style-default callout-note callout-titled" title="The CHROM projection">
+<div class="callout-header d-flex align-content-center" data-bs-toggle="collapse" data-bs-target=".callout-1-contents" aria-controls="callout-1" aria-expanded="true" aria-label="Toggle callout">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Note</span>The CHROM projection
+</div>
+<div class="callout-btn-toggle d-inline-block border-0 py-1 ps-1 pe-0 float-end"><i class="callout-toggle"></i></div>
+</div>
+<div id="callout-1" class="callout-1-contents callout-collapse collapse show">
+<div class="callout-body-container callout-body">
+<p>After normalising the mean RGB traces within the region of interest, let <img src="https://latex.codecogs.com/png.latex?%5Ctilde%20r(t)">, <img src="https://latex.codecogs.com/png.latex?%5Ctilde%20g(t)">, and <img src="https://latex.codecogs.com/png.latex?%5Ctilde%20b(t)"> denote the temporal colour fluctuations. The chrominance components are <img src="https://latex.codecogs.com/png.latex?%5Cbegin%7Balign%7D%0AX(t)%20&amp;=%203%5C,%5Ctilde%20r(t)%20-%202%5C,%5Ctilde%20g(t),%5C%5C%0AY(t)%20&amp;=%20%5Ctfrac%7B3%7D%7B2%7D%5C,%5Ctilde%20r(t)%20+%20%5Ctilde%20g(t)%20-%20%5Ctfrac%7B3%7D%7B2%7D%5C,%5Ctilde%20b(t),%0A%5Cend%7Balign%7D"> with corresponding standard deviations <img src="https://latex.codecogs.com/png.latex?%5Csigma_X"> and <img src="https://latex.codecogs.com/png.latex?%5Csigma_Y"> evaluated over the sliding analysis window. The final projected pulse trace is then <img src="https://latex.codecogs.com/png.latex?%5Cbegin%7Bequation%7D%0AC(t)%20=%20X(t)%20-%20%5Cfrac%7B%5Csigma_X%7D%7B%5Csigma_Y%7D%20%5C,%20Y(t).%0A%5Cend%7Bequation%7D"></p>
+<p>The projection works in a chrominance subspace to reduce intensity / illumination variation and then adaptively combines <img src="https://latex.codecogs.com/png.latex?X"> and <img src="https://latex.codecogs.com/png.latex?Y"> so that the motion/lighting-correlated components cancel (via the <img src="https://latex.codecogs.com/png.latex?%5Csigma_X"> / <img src="https://latex.codecogs.com/png.latex?%5Csigma_Y"> scaling), leaving a stronger pulsatile trace.</p>
+</div>
+</div>
+</div>
+<ol start="6" type="1">
+<li><strong>Post-process to calculate vital sign(s)</strong></li>
+</ol>
+<p>Now that the signal is into a singular waveform, this can be processed into a signal fairly trivially. Neurokit <span class="citation" data-cites="Makowski2021neurokit">(Makowski et al. 2021)</span> has some good resources for this in Python, mostly designed for PPG applications, but they will work similarly with the rPPG signal (provided it is of a good quality).</p>
+<p>This is an example I generated using a simulated rppg signal, to illustrate the type of processing it will do:</p>
+<div id="ca8efca7" class="cell" data-fig-height="7" data-fig-width="12" data-execution_count="1">
+<div class="cell-output cell-output-display">
+<div class="quarto-figure quarto-figure-center">
+<figure class="figure">
+<p><img src="https://jonathankierce.com/posts/02-rppgintro_files/figure-html/cell-2-output-1.png" width="791" height="475" class="figure-img"></p>
+<figcaption>NeuroKit2 processing of a simulated rPPG-like signal.</figcaption>
+</figure>
+</div>
+</div>
+</div>
+</section>
+<section id="references" class="level2">
+<h2 class="anchored" data-anchor-id="references">References</h2>
+<div id="refs" class="references csl-bib-body hanging-indent" data-entry-spacing="0">
+<div id="ref-boccignone2020openframework" class="csl-entry">
+Boccignone, Giuseppe, Donatello Conte, Vittorio Cuculo, Alessandro D’Amelio, Giuliano Grossi, and Raffaella Lanzarotti. 2020. <span>“An Open Framework for Remote-PPG Methods and Their Assessment.”</span> <em>IEEE Access</em> 8: 216083–103. <a href="https://doi.org/10.1109/ACCESS.2020.3040936">https://doi.org/10.1109/ACCESS.2020.3040936</a>.
+</div>
+<div id="ref-ppg_img" class="csl-entry">
+Dzedzickis, Andrius, Arturas Kaklauskas, and Vytautas Bučinskas. 2020. <span>“Human Emotion Recognition: Review of Sensors and Methods.”</span> <em>Sensors</em> 20 (January): 592. <a href="https://doi.org/10.3390/s20030592">https://doi.org/10.3390/s20030592</a>.
+</div>
+<div id="ref-chrom" class="csl-entry">
+Haan, Gerard de, and Vincent Jeanne. 2013. <span>“Robust Pulse Rate from Chrominance-Based rPPG.”</span> <em>IEEE Transactions on Biomedical Engineering</em> 60 (10): 2878–86. <a href="https://doi.org/10.1109/TBME.2013.2266196">https://doi.org/10.1109/TBME.2013.2266196</a>.
+</div>
+<div id="ref-haugg2022construction" class="csl-entry">
+Haugg, Fridolin, Mohamed Elgendi, and Carlo Menon. 2022. <span>“Effectiveness of Remote PPG Construction Methods: A Preliminary Analysis.”</span> <em>Bioengineering</em> 9 (10): 485. <a href="https://doi.org/10.3390/bioengineering9100485">https://doi.org/10.3390/bioengineering9100485</a>.
+</div>
+<div id="ref-roi_selection_assessment" class="csl-entry">
+Kim, Dae-Yeol, Kwangkee Lee, and Chae-Bong Sohn. 2021. <span>“Assessment of ROI Selection for Facial Video-Based rPPG.”</span> <em>Sensors</em> 21 (23). <a href="https://doi.org/10.3390/s21237923">https://doi.org/10.3390/s21237923</a>.
+</div>
+<div id="ref-DLib_shape_predictor_68" class="csl-entry">
+King, Davis E. 2015. <span>“Shape_predictor_68_face_landmarks.dat.bz2.”</span> Dlib model file download. <a href="http://dlib.net/files/shape_predictor_68_face_landmarks.dat.bz2">http://dlib.net/files/shape_predictor_68_face_landmarks.dat.bz2</a>.
+</div>
+<div id="ref-Makowski2021neurokit" class="csl-entry">
+Makowski, Dominique, Tam Pham, Zen J. Lau, Jan C. Brammer, François Lespinasse, Hung Pham, Christopher Schölzel, and S. H. Annabel Chen. 2021. <span>“<span>NeuroKit</span>2: A Python Toolbox for Neurophysiological Signal Processing.”</span> <em>Behavior Research Methods</em> 53 (4): 1689–96. <a href="https://doi.org/10.3758/s13428-020-01516-y">https://doi.org/10.3758/s13428-020-01516-y</a>.
+</div>
+<div id="ref-verkruysse2008remote" class="csl-entry">
+Verkruysse, Wim, Lars O. Svaasand, and J. Stuart Nelson. 2008. <span>“Remote Plethysmographic Imaging Using Ambient Light.”</span> <em>Optics Express</em> 16 (26): 21434–45. <a href="https://doi.org/10.1364/OE.16.021434">https://doi.org/10.1364/OE.16.021434</a>.
+</div>
+<div id="ref-yang2016cielab_rppg" class="csl-entry">
+Yang, Yuting, Chenbin Liu, Hui Yu, Dangdang Shao, Francis Tsow, and Nongjian Tao. 2016. <span>“Motion Robust Remote Photoplethysmography in CIELab Color Space.”</span> <em>Journal of Biomedical Optics</em> 21 (11): 117001. <a href="https://doi.org/10.1117/1.JBO.21.11.117001">https://doi.org/10.1117/1.JBO.21.11.117001</a>.
+</div>
+</div>
+
+
+</section>
+
+ ]]></description>
+  <category>rPPG</category>
+  <guid>https://jonathankierce.com/posts/02-rppgintro.html</guid>
+  <pubDate>Thu, 11 Dec 2025 13:00:00 GMT</pubDate>
+</item>
+</channel>
+</rss>
